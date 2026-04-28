@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b54fcdcdf298bd348ad6408334bdc88e, type: 3}
+  m_Name: LevelEditorConfig
+  m_EditorClassIdentifier: 
+  <LevelDataServiceConfig>k__BackingField: {fileID: 11400000, guid: d106b239ad74f754b88e394b5e1e9adc,
+    type: 2}
+  <MaxGridSize>k__BackingField: 35
+  <AlphaThreshold>k__BackingField: 1
+  <CellOpaqueRatio>k__BackingField: 0.1
+  <Palette>k__BackingField: {fileID: 11400000, guid: 3d2dee0ff5f9ead4a84c2a25426532d5,
+    type: 2}
+  <MaxAmmoPerPig>k__BackingField: 40
+  <MinAmmoPerPig>k__BackingField: 1
+  <DefaultLaneCount>k__BackingField: 3
+  <DifficultyPresets>k__BackingField:
+  - Name: Easy
+    AvgAmmo: 30
+    AmmoVariance: 8
+  - Name: Medium
+    AvgAmmo: 22
+    AmmoVariance: 8
+  - Name: Hard
+    AvgAmmo: 15
+    AmmoVariance: 8
+  <MaxValidationRetries>k__BackingField: 50
+  <OutputFolder>k__BackingField: Assets/_Project/Resources/Levels
