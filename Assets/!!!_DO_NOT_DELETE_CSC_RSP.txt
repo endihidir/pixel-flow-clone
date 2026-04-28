@@ -1,0 +1,16 @@
+========================================
+   ⚠️ DO NOT DELETE THIS FILE ⚠️
+========================================
+
+This project uses "csc.rsp" to define global
+compiler symbols required for proper build.
+
+Required for:
+- UniTask DOTween Support
+- Successful compilation on fresh clone
+- Preventing missing define errors
+
+If removed, the project may fail to compile
+or lose async DOTween functionality.
+
+========================================
