@@ -1,4 +1,4 @@
-using Game.Grid.Handlers;
+using Game.Factory.Handlers;
 using Game.Level.Services;
 using Game.Models;
 using Game.Views;

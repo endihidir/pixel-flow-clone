@@ -3,7 +3,7 @@ using Game.Grid.Item;
 
 namespace Game.Models
 {
-    public interface IPixelGridModel : IBaseGridModel<PixelCell>
+    public interface IPixelGridModel : IBaseGridModel<PixelCellObject>
     {
         
     }

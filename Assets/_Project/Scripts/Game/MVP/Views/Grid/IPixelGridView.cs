@@ -10,6 +10,6 @@ namespace Game.Views
         Transform PixelsParent { get; }
         void Initialize(int width, int height);
         Vector3 GetWorldPosition(Vector2Int coord);
-        void PlacePixel(PixelCell pixelCell, Vector2Int coord);
+        void PlacePixel(PixelCellObject pixelCellObject, Vector2Int coord);
     }
 }

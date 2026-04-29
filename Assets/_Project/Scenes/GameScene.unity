@@ -217,7 +217,7 @@ GameObject:
   - component: {fileID: 273496726}
   - component: {fileID: 273496725}
   m_Layer: 0
-  m_Name: FloorView
+  m_Name: Floor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -509,7 +509,7 @@ MonoBehaviour:
   <AreaPointA>k__BackingField: {fileID: 1967859023}
   <AreaPointB>k__BackingField: {fileID: 1338025042}
   <Spacing>k__BackingField: 0
-  <PixelHeight>k__BackingField: 1
+  <PixelHeight>k__BackingField: 1.5
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0

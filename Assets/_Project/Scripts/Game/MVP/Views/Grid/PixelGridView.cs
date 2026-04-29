@@ -34,11 +34,11 @@ namespace Game.Views
             return new Vector3(_startPosition.x + coord.x * step, _startPosition.y, _startPosition.z - coord.y * step);
         }
 
-        public void PlacePixel(PixelCell pixelCell, Vector2Int coord)
+        public void PlacePixel(PixelCellObject pixelCellObject, Vector2Int coord)
         {
-            pixelCell.SetParent(PixelsParent);
-            pixelCell.SetPosition(GetWorldPosition(coord));
-            pixelCell.SetScale(new Vector3(_cellSize, PixelHeight, _cellSize));
+            pixelCellObject.SetParent(PixelsParent);
+            pixelCellObject.SetPosition(GetWorldPosition(coord));
+            pixelCellObject.SetScale(new Vector3(_cellSize, PixelHeight, _cellSize));
         }
 
         private void CalculateLayout()

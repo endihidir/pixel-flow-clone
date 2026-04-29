@@ -1,3 +1,5 @@
+using Core.SaveSystem;
+using Game.Level.Models;
 using NaughtyAttributes;
 using UnityEngine;
 
@@ -13,5 +15,12 @@ namespace Game.Level.Configs
         [field: SerializeField, Header("GAMEPLAY TESTING")] public bool UseTestLevel { get; private set; } = false;
         [field: SerializeField, ShowIf(nameof(UseTestLevel))] public int TestLevelIndex { get; private set; }
         [field: SerializeField] public int TargetLevelIndex { get; private set; } = 0;
+        
+        [Button]
+        public void SetCurrentLevelIndex()
+        {
+            var progressionModel = new LevelProgressionModel(new JsonSaveService());
+            progressionModel.OverrideSaveData(TargetLevelIndex);
+        }
     }
 }

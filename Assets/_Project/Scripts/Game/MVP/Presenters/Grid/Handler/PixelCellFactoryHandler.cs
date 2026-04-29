@@ -2,12 +2,12 @@ using Game.Grid.Item;
 using Game.Level.Configs;
 using Game.Level.Data;
 using Game.Utils;
-using Game.View.Factories;
+using Game.Factories;
 using UnityEngine;
 
-namespace Game.Grid.Handlers
+namespace Game.Factory.Handlers
 {
-    public class PixelCellFactoryHandler : IPixelCellFactoryHandler
+    public sealed class PixelCellFactoryHandler : IPixelCellFactoryHandler
     {
         private readonly IPixelCellFactory _pixelCellFactory;
         private readonly ColorPaletteSO _colorPalette;
@@ -18,9 +18,9 @@ namespace Game.Grid.Handlers
             _colorPalette = colorPalette;
         }
 
-        public void PopulatePixelCells(ColorId[] pixelColorIds, int width, int height, out PixelCell[,] pixelCells)
+        public void PopulatePixelCells(ColorId[] pixelColorIds, int width, int height, out PixelCellObject[,] pixelCells)
         {
-            pixelCells = new PixelCell[width, height];
+            pixelCells = new PixelCellObject[width, height];
 
             for (var i = 0; i < width * height; i++)
             {
@@ -36,9 +36,9 @@ namespace Game.Grid.Handlers
             }
         }
         
-        private PixelCell CreatePixelCell(ColorId colorId, Vector2Int coord)
+        private PixelCellObject CreatePixelCell(ColorId colorId, Vector2Int coord)
         {
-            var pixelCell = _pixelCellFactory.GetPixelCell<PixelCell>();
+            var pixelCell = _pixelCellFactory.GetPixelCell<PixelCellObject>();
             
             var color = _colorPalette.GetColor(colorId);
             
