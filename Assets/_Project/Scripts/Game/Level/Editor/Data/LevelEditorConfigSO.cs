@@ -16,9 +16,9 @@ namespace Game.Level.EditorTools
         [field: SerializeField, Range(0f, 1f)] public float CellOpaqueRatio { get; private set; } = 0.5f;
         [field: SerializeField] public ColorPaletteSO Palette { get; private set; }
 
-        [field: Header("Pig Generation")]
-        [field: SerializeField] public int MaxAmmoPerPig { get; private set; } = 40;
-        [field: SerializeField] public int MinAmmoPerPig { get; private set; } = 3;
+        [field: Header("LaneUnit Generation")]
+        [field: SerializeField] public int MaxAmmoPerLaneUnit { get; private set; } = 40;
+        [field: SerializeField] public int MinAmmoPerLaneUnit { get; private set; } = 3;
         [field: SerializeField] public int DefaultLaneCount { get; private set; } = 3;
         [field: SerializeField] public DifficultyPreset[] DifficultyPresets { get; private set; }
 

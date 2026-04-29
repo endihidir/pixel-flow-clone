@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
+using Game.Level.Data;
 using UnityEditor;
 using UnityEngine;
-using Game.Level.Data;
 
 namespace Game.Level.EditorTools
 {
@@ -23,7 +23,7 @@ namespace Game.Level.EditorTools
         private int _laneCount = 3;
         private int _difficultyIndex = 1;
         private string _fileNamePrefix = "level";
-        private int _startIndex = 1;
+        private int _startLevelNumber = 1;
         private Vector2 _genScroll;
         private string _lastReport;
         private bool _laneCountInitialized;
@@ -32,13 +32,14 @@ namespace Game.Level.EditorTools
         private TextAsset _loadJson;
 
         // Edit tab
-        private LevelDefinition _editLevel;
-        private string _editSourcePath;          // for Overwrite mode
+        private LevelJson _editLevelJson;
+        private string _editSourcePath;
         private SaveMode _editSaveMode;
         private Vector2 _editScroll;
         private int _selectedLane = -1;
-        private int _selectedPig = -1;
+        private int _selectedlaneUnit = -1;
         private string _editStatus;
+        private ColorId _selectedColor = ColorId.Red;
 
         [MenuItem("Game/Level/Level Editor")]
         public static void Open()
@@ -113,7 +114,7 @@ namespace Game.Level.EditorTools
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Output", EditorStyles.boldLabel);
             _fileNamePrefix = EditorGUILayout.TextField("File Prefix", _fileNamePrefix);
-            _startIndex = EditorGUILayout.IntField("Start Index", _startIndex);
+            _startLevelNumber = EditorGUILayout.IntField("Start Level Number", _startLevelNumber);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Source PNGs", EditorStyles.boldLabel);
@@ -158,7 +159,6 @@ namespace Game.Level.EditorTools
                     ImportAll();
             }
 
-            // Single-PNG quick action: import + open in Edit.
             using (new EditorGUI.DisabledScope(_pngs.Count != 1 || _pngs[0] == null))
             {
                 if (GUILayout.Button("Import & Edit (single)", GUILayout.Height(22)))
@@ -176,15 +176,15 @@ namespace Game.Level.EditorTools
         private void ImportAll()
         {
             var sb = new System.Text.StringBuilder();
-            int idx = _startIndex;
+            int idx = _startLevelNumber;
             for (int i = 0; i < _pngs.Count; i++)
             {
                 var png = _pngs[i];
                 if (png == null) continue;
                 string outName = $"{_fileNamePrefix}_{idx}";
-                var result = LevelImporter.Import(png, _laneCount, _difficultyIndex, _config, outName);
+                var result = LevelImportPipeline.Import(png, _laneCount, _difficultyIndex, _config, outName, idx);
                 if (result.Success)
-                    sb.AppendLine($"OK  {png.name} -> {outName}.json (attempts: {result.Attempts})");
+                    sb.AppendLine($"OK  {png.name} -> {outName}.json (level {idx}, attempts: {result.Attempts})");
                 else
                     sb.AppendLine($"FAIL  {png.name}: {result.Error}");
                 idx++;
@@ -196,18 +196,18 @@ namespace Game.Level.EditorTools
         private void ImportAndEditSingle()
         {
             var png = _pngs[0];
-            string outName = $"{_fileNamePrefix}_{_startIndex}";
-            var result = LevelImporter.Import(png, _laneCount, _difficultyIndex, _config, outName);
+            string outName = $"{_fileNamePrefix}_{_startLevelNumber}";
+            var result = LevelImportPipeline.Import(png, _laneCount, _difficultyIndex, _config, outName, _startLevelNumber);
             if (!result.Success)
             {
                 _lastReport = $"FAIL  {png.name}: {result.Error}";
                 return;
             }
-            _editLevel = result.Level;
+            _editLevelJson = result.LevelJson;
             _editSourcePath = result.OutputPath;
-            _editSaveMode = SaveMode.NewFile; // generate output is a fresh file; subsequent saves overwrite this path
+            _editSaveMode = SaveMode.NewFile;
             _selectedLane = -1;
-            _selectedPig = -1;
+            _selectedlaneUnit = -1;
             _editStatus = $"Generated from {png.name}.";
             _tab = Tab.Edit;
             Repaint();
@@ -240,11 +240,11 @@ namespace Game.Level.EditorTools
         {
             try
             {
-                _editLevel = JsonUtility.FromJson<LevelDefinition>(asset.text);
+                _editLevelJson = JsonUtility.FromJson<LevelJson>(asset.text);
                 _editSourcePath = AssetDatabase.GetAssetPath(asset);
                 _editSaveMode = SaveMode.Overwrite;
                 _selectedLane = -1;
-                _selectedPig = -1;
+                _selectedlaneUnit = -1;
                 _editStatus = $"Loaded {asset.name}.";
                 _tab = Tab.Edit;
                 Repaint();
@@ -260,11 +260,12 @@ namespace Game.Level.EditorTools
             try
             {
                 var text = File.ReadAllText(absolutePath);
-                _editLevel = JsonUtility.FromJson<LevelDefinition>(text);
+                var levelJson = JsonUtility.FromJson<LevelJson>(text);
+                _editLevelJson = levelJson;
                 _editSourcePath = absolutePath;
                 _editSaveMode = SaveMode.Overwrite;
                 _selectedLane = -1;
-                _selectedPig = -1;
+                _selectedlaneUnit = -1;
                 _editStatus = $"Loaded {Path.GetFileName(absolutePath)}.";
                 _tab = Tab.Edit;
                 Repaint();
@@ -279,7 +280,7 @@ namespace Game.Level.EditorTools
 
         private void DrawEditTab()
         {
-            if (_editLevel == null)
+            if (_editLevelJson == null)
             {
                 EditorGUILayout.HelpBox("No level loaded. Use the Generate or Load tab first.", MessageType.Info);
                 return;
@@ -287,9 +288,15 @@ namespace Game.Level.EditorTools
 
             // Toolbar
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label($"Size: {_editLevel.Width}x{_editLevel.Height}    Lanes: {_editLevel.Lanes?.Length ?? 0}",
+            GUILayout.Label($"Size: {_editLevelJson.grid_width}x{_editLevelJson.grid_height}    Lanes: {_editLevelJson.lanes?.Length ?? 0}",
                 EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
+
+            EditorGUI.BeginChangeCheck();
+            int newLevelNumber = EditorGUILayout.IntField("Level #", _editLevelJson.level_number, GUILayout.Width(120));
+            if (EditorGUI.EndChangeCheck())
+                _editLevelJson.level_number = newLevelNumber;
+
             if (GUILayout.Button("Validate", GUILayout.Width(80))) RunValidate();
             if (GUILayout.Button("Regenerate Lanes", GUILayout.Width(140))) RegenerateLanes();
             if (GUILayout.Button("Save", GUILayout.Width(80))) SaveEdit();
@@ -304,7 +311,7 @@ namespace Game.Level.EditorTools
             EditorGUILayout.Space();
             DrawLaneEditor();
             EditorGUILayout.Space();
-            DrawPigDetailPanel();
+            DrawlaneUnitDetailPanel();
 
             EditorGUILayout.EndScrollView();
         }
@@ -313,11 +320,10 @@ namespace Game.Level.EditorTools
         {
             EditorGUILayout.LabelField("Board (click to set selected color, right-click to erase)", EditorStyles.boldLabel);
 
-            int w = _editLevel.Width;
-            int h = _editLevel.Height;
+            int w = _editLevelJson.grid_width;
+            int h = _editLevelJson.grid_height;
             if (w == 0 || h == 0) return;
 
-            // Available width inside the scroll view; clamp height to a reasonable max.
             float availW = EditorGUIUtility.currentViewWidth - 40f;
             float maxH = 500f;
 
@@ -337,10 +343,10 @@ namespace Game.Level.EditorTools
                 for (int x = 0; x < w; x++)
                 {
                     int flat = y * w + x;
-                    var id = _editLevel.Cubes[flat];
+                    var id = ParseColor(_editLevelJson.pixels[flat]);
                     var cellRect = new Rect(rect.x + x * cell, rect.y + y * cell, cell - 1, cell - 1);
                     var color = id == ColorId.None
-                        ? new Color(0.18f, 0.10f, 0.25f)   // dark purple, distinct from Black palette color
+                        ? new Color(0.18f, 0.10f, 0.25f)
                         : (palette != null ? palette.GetColor(id) : Color.magenta);
                     EditorGUI.DrawRect(cellRect, color);
 
@@ -348,7 +354,7 @@ namespace Game.Level.EditorTools
                     {
                         if (e.button == 1)
                         {
-                            _editLevel.Cubes[flat] = ColorId.None;
+                            _editLevelJson.pixels[flat] = ColorId.None.ToString();
                             _editStatus = "Board changed. Run Validate or Regenerate Lanes.";
                             GUI.changed = true;
                             e.Use();
@@ -356,7 +362,7 @@ namespace Game.Level.EditorTools
                         }
                         else if (e.button == 0 && _selectedColor != ColorId.None)
                         {
-                            _editLevel.Cubes[flat] = _selectedColor;
+                            _editLevelJson.pixels[flat] = _selectedColor.ToString();
                             _editStatus = "Board changed. Run Validate or Regenerate Lanes.";
                             GUI.changed = true;
                             e.Use();
@@ -370,8 +376,6 @@ namespace Game.Level.EditorTools
             EditorGUILayout.LabelField("Selected Color (left click to paint)", EditorStyles.miniBoldLabel);
             DrawColorPicker();
         }
-
-        private ColorId _selectedColor = ColorId.Red;
 
         private void DrawColorPicker()
         {
@@ -397,9 +401,10 @@ namespace Game.Level.EditorTools
 
         private void DrawLaneEditor()
         {
-            EditorGUILayout.LabelField("Lanes (click pig to select)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Lanes (click laneUnit to select)", EditorStyles.boldLabel);
             var palette = _config.Palette;
-            var lanes = _editLevel.Lanes;
+
+            var lanes = _editLevelJson.lanes;
             if (lanes == null) return;
 
             EditorGUILayout.BeginHorizontal();
@@ -407,151 +412,151 @@ namespace Game.Level.EditorTools
             {
                 EditorGUILayout.BeginVertical(GUI.skin.box, GUILayout.Width(76));
                 EditorGUILayout.LabelField($"Lane {li}", EditorStyles.miniBoldLabel);
-                var pigs = lanes[li].Pigs;
-                if (pigs != null)
+                var laneUnits = lanes[li].laneUnits;
+                if (laneUnits != null)
                 {
-                    for (int pi = 0; pi < pigs.Length; pi++)
+                    for (int pi = 0; pi < laneUnits.Length; pi++)
                     {
-                        var pig = pigs[pi];
+                        var laneUnit = laneUnits[pi];
                         var bg = GUI.backgroundColor;
-                        GUI.backgroundColor = palette != null ? palette.GetColor(pig.Color) : Color.gray;
-                        bool isSel = (li == _selectedLane && pi == _selectedPig);
-                        string label = (isSel ? ">" : "") + pig.Ammo.ToString();
+                        GUI.backgroundColor = palette != null ? palette.GetColor(ParseColor(laneUnit.color)) : Color.gray;
+                        bool isSel = (li == _selectedLane && pi == _selectedlaneUnit);
+                        string label = (isSel ? ">" : "") + laneUnit.ammo.ToString();
                         if (GUILayout.Button(label, GUILayout.Width(60), GUILayout.Height(22)))
                         {
                             _selectedLane = li;
-                            _selectedPig = pi;
+                            _selectedlaneUnit = pi;
                         }
                         GUI.backgroundColor = bg;
                     }
                 }
 
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("+", GUILayout.Width(28))) AddPig(li);
+                if (GUILayout.Button("+", GUILayout.Width(28))) AddlaneUnit(li);
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
             }
             EditorGUILayout.EndHorizontal();
         }
 
-        private void DrawPigDetailPanel()
+        private void DrawlaneUnitDetailPanel()
         {
-            EditorGUILayout.LabelField("Selected Pig", EditorStyles.boldLabel);
-            if (_selectedLane < 0 || _selectedPig < 0
-                || _selectedLane >= _editLevel.Lanes.Length
-                || _selectedPig >= _editLevel.Lanes[_selectedLane].Pigs.Length)
+            EditorGUILayout.LabelField("Selected laneUnit", EditorStyles.boldLabel);
+            if (_selectedLane < 0 || _selectedlaneUnit < 0
+                || _selectedLane >= _editLevelJson.lanes.Length
+                || _selectedlaneUnit >= _editLevelJson.lanes[_selectedLane].laneUnits.Length)
             {
-                EditorGUILayout.HelpBox("No pig selected.", MessageType.None);
+                EditorGUILayout.HelpBox("No laneUnit selected.", MessageType.None);
                 return;
             }
 
-            var pigs = _editLevel.Lanes[_selectedLane].Pigs;
-            var pig = pigs[_selectedPig];
+            var laneUnits = _editLevelJson.lanes[_selectedLane].laneUnits;
+            var laneUnit = laneUnits[_selectedlaneUnit];
 
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField($"Lane {_selectedLane}, Slot {_selectedPig}", GUILayout.Width(160));
-            pig.Color = (ColorId)EditorGUILayout.EnumPopup("Color", pig.Color);
+            EditorGUILayout.LabelField($"Lane {_selectedLane}, Slot {_selectedlaneUnit}", GUILayout.Width(160));
+            laneUnit.color = ((ColorId)EditorGUILayout.EnumPopup("Color", ParseColor(laneUnit.color))).ToString();
             EditorGUILayout.EndHorizontal();
 
-            pig.Ammo = EditorGUILayout.IntSlider("Ammo", pig.Ammo,
-                _config.MinAmmoPerPig, _config.MaxAmmoPerPig);
+            laneUnit.ammo = EditorGUILayout.IntSlider("Ammo", laneUnit.ammo,
+                _config.MinAmmoPerLaneUnit, _config.MaxAmmoPerLaneUnit);
 
-            pigs[_selectedPig] = pig;
+            laneUnits[_selectedlaneUnit] = laneUnit;
 
             EditorGUILayout.BeginHorizontal();
-            using (new EditorGUI.DisabledScope(_selectedPig <= 0))
-                if (GUILayout.Button("Move Up")) MovePigInLane(_selectedLane, _selectedPig, -1);
-            using (new EditorGUI.DisabledScope(_selectedPig >= pigs.Length - 1))
-                if (GUILayout.Button("Move Down")) MovePigInLane(_selectedLane, _selectedPig, +1);
-            if (GUILayout.Button("Remove")) RemoveSelectedPig();
+            using (new EditorGUI.DisabledScope(_selectedlaneUnit <= 0))
+                if (GUILayout.Button("Move Up")) MovelaneUnitInLane(_selectedLane, _selectedlaneUnit, -1);
+            using (new EditorGUI.DisabledScope(_selectedlaneUnit >= laneUnits.Length - 1))
+                if (GUILayout.Button("Move Down")) MovelaneUnitInLane(_selectedLane, _selectedlaneUnit, +1);
+            if (GUILayout.Button("Remove")) RemoveSelectedlaneUnit();
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Move to Lane:", GUILayout.Width(100));
-            for (int li = 0; li < _editLevel.Lanes.Length; li++)
+            for (int li = 0; li < _editLevelJson.lanes.Length; li++)
             {
                 using (new EditorGUI.DisabledScope(li == _selectedLane))
                     if (GUILayout.Button(li.ToString(), GUILayout.Width(28)))
-                        MovePigToLane(_selectedLane, _selectedPig, li);
+                        MovelaneUnitToLane(_selectedLane, _selectedlaneUnit, li);
             }
             EditorGUILayout.EndHorizontal();
         }
 
         // ---------- Edit operations ----------
 
-        private void AddPig(int laneIndex)
+        private void AddlaneUnit(int laneIndex)
         {
-            var lanes = _editLevel.Lanes;
-            var old = lanes[laneIndex].Pigs ?? new PigData[0];
-            var n = new PigData[old.Length + 1];
+            var lanes = _editLevelJson.lanes;
+            var old = lanes[laneIndex].laneUnits ?? new LaneUnitJson[0];
+            var n = new LaneUnitJson[old.Length + 1];
             for (int i = 0; i < old.Length; i++) n[i] = old[i];
-            n[old.Length] = new PigData { Color = _selectedColor, Ammo = _config.MinAmmoPerPig };
-            lanes[laneIndex].Pigs = n;
+            n[old.Length] = new LaneUnitJson { color = _selectedColor.ToString(), ammo = _config.MinAmmoPerLaneUnit };
+            lanes[laneIndex].laneUnits = n;
             _selectedLane = laneIndex;
-            _selectedPig = old.Length;
+            _selectedlaneUnit = old.Length;
         }
 
-        private void RemoveSelectedPig()
+        private void RemoveSelectedlaneUnit()
         {
-            var pigs = _editLevel.Lanes[_selectedLane].Pigs;
-            var n = new PigData[pigs.Length - 1];
-            for (int i = 0, k = 0; i < pigs.Length; i++)
-                if (i != _selectedPig) n[k++] = pigs[i];
-            _editLevel.Lanes[_selectedLane].Pigs = n;
-            _selectedPig = Mathf.Min(_selectedPig, n.Length - 1);
+            var laneUnits = _editLevelJson.lanes[_selectedLane].laneUnits;
+            var n = new LaneUnitJson[laneUnits.Length - 1];
+            for (int i = 0, k = 0; i < laneUnits.Length; i++)
+                if (i != _selectedlaneUnit) n[k++] = laneUnits[i];
+            _editLevelJson.lanes[_selectedLane].laneUnits = n;
+            _selectedlaneUnit = Mathf.Min(_selectedlaneUnit, n.Length - 1);
         }
 
-        private void MovePigInLane(int laneIndex, int pigIndex, int delta)
+        private void MovelaneUnitInLane(int laneIndex, int laneUnitIndex, int delta)
         {
-            var pigs = _editLevel.Lanes[laneIndex].Pigs;
-            int target = pigIndex + delta;
-            if (target < 0 || target >= pigs.Length) return;
-            (pigs[pigIndex], pigs[target]) = (pigs[target], pigs[pigIndex]);
-            _selectedPig = target;
+            var laneUnits = _editLevelJson.lanes[laneIndex].laneUnits;
+            int target = laneUnitIndex + delta;
+            if (target < 0 || target >= laneUnits.Length) return;
+            (laneUnits[laneUnitIndex], laneUnits[target]) = (laneUnits[target], laneUnits[laneUnitIndex]);
+            _selectedlaneUnit = target;
         }
 
-        private void MovePigToLane(int fromLane, int pigIndex, int toLane)
+        private void MovelaneUnitToLane(int fromLane, int laneUnitIndex, int toLane)
         {
-            var fromPigs = _editLevel.Lanes[fromLane].Pigs;
-            var toPigs = _editLevel.Lanes[toLane].Pigs ?? new PigData[0];
-            var moving = fromPigs[pigIndex];
+            var fromlaneUnits = _editLevelJson.lanes[fromLane].laneUnits;
+            var tolaneUnits = _editLevelJson.lanes[toLane].laneUnits ?? new LaneUnitJson[0];
+            var moving = fromlaneUnits[laneUnitIndex];
 
-            var newFrom = new PigData[fromPigs.Length - 1];
-            for (int i = 0, k = 0; i < fromPigs.Length; i++)
-                if (i != pigIndex) newFrom[k++] = fromPigs[i];
+            var newFrom = new LaneUnitJson[fromlaneUnits.Length - 1];
+            for (int i = 0, k = 0; i < fromlaneUnits.Length; i++)
+                if (i != laneUnitIndex) newFrom[k++] = fromlaneUnits[i];
 
-            var newTo = new PigData[toPigs.Length + 1];
-            for (int i = 0; i < toPigs.Length; i++) newTo[i] = toPigs[i];
-            newTo[toPigs.Length] = moving;
+            var newTo = new LaneUnitJson[tolaneUnits.Length + 1];
+            for (int i = 0; i < tolaneUnits.Length; i++) newTo[i] = tolaneUnits[i];
+            newTo[tolaneUnits.Length] = moving;
 
-            _editLevel.Lanes[fromLane].Pigs = newFrom;
-            _editLevel.Lanes[toLane].Pigs = newTo;
+            _editLevelJson.lanes[fromLane].laneUnits = newFrom;
+            _editLevelJson.lanes[toLane].laneUnits = newTo;
             _selectedLane = toLane;
-            _selectedPig = newTo.Length - 1;
+            _selectedlaneUnit = newTo.Length - 1;
         }
 
         private void RunValidate()
         {
-            bool ok = GreedyLevelOracle.IsSolvable(_editLevel.Cubes, _editLevel.Lanes, _config.LevelDataServiceConfig.TraySize);
+            bool ok = GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, _editLevelJson.lanes, _config.LevelDataServiceConfig.TraySize);
             _editStatus = ok ? "Validate: SOLVABLE" : "Validate: NOT SOLVABLE";
         }
 
         private void RegenerateLanes()
         {
             var preset = _config.DifficultyPresets[Mathf.Clamp(_difficultyIndex, 0, _config.DifficultyPresets.Length - 1)];
-            int laneCount = _editLevel.Lanes != null && _editLevel.Lanes.Length > 0
-                ? _editLevel.Lanes.Length
+            int laneCount = _editLevelJson.lanes != null && _editLevelJson.lanes.Length > 0
+                ? _editLevelJson.lanes.Length
                 : Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
 
             int seedBase = (_editSourcePath ?? "regen").GetHashCode();
-            LaneData[] lanes = null;
+            LaneJson[] lanes = null;
             int attempts = 0;
             for (int i = 0; i < _config.MaxValidationRetries; i++)
             {
                 attempts++;
                 var rng = new System.Random(seedBase + i);
-                lanes = PigGenerator.Generate(_editLevel.Cubes, laneCount, preset, _config, rng);
-                if (GreedyLevelOracle.IsSolvable(_editLevel.Cubes, lanes, _config.LevelDataServiceConfig.TraySize)) break;
+                lanes = LaneGenerator.Generate(ToColorArray(_editLevelJson.pixels), laneCount, preset, _config, rng);
+                if (GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, lanes, _config.LevelDataServiceConfig.TraySize)) break;
                 lanes = null;
             }
 
@@ -560,16 +565,16 @@ namespace Game.Level.EditorTools
                 _editStatus = $"Regenerate FAILED after {attempts} attempts.";
                 return;
             }
+            _editLevelJson.lanes = lanes;
 
-            _editLevel.Lanes = lanes;
             _selectedLane = -1;
-            _selectedPig = -1;
+            _selectedlaneUnit = -1;
             _editStatus = $"Lanes regenerated (attempts: {attempts}).";
         }
 
         private void SaveEdit()
         {
-            if (_editLevel == null) return;
+            if (_editLevelJson == null) return;
 
             string path = _editSourcePath;
             if (string.IsNullOrEmpty(path))
@@ -581,7 +586,7 @@ namespace Game.Level.EditorTools
 
             try
             {
-                File.WriteAllText(path, JsonUtility.ToJson(_editLevel, prettyPrint: true));
+                File.WriteAllText(path, LevelJsonConverter.ToJson(_editLevelJson, prettyPrint: true));
                 AssetDatabase.Refresh();
                 _editStatus = $"Saved to {path}";
             }
@@ -592,6 +597,18 @@ namespace Game.Level.EditorTools
         }
 
         // ---------- Helpers ----------
+
+        private static ColorId ParseColor(string value)
+        {
+            return System.Enum.TryParse(value, out ColorId id) ? id : ColorId.None;
+        }
+
+        private static ColorId[] ToColorArray(string[] pixels)
+        {
+            var result = new ColorId[pixels?.Length ?? 0];
+            for (int i = 0; i < result.Length; i++) result[i] = ParseColor(pixels[i]);
+            return result;
+        }
 
         private static Texture2D ResolveTexture(Object obj)
         {

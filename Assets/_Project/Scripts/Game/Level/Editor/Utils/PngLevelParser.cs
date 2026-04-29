@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Game.Level.Data;
-using Game.Level.Configs;
 
 namespace Game.Level.EditorTools
 {
@@ -20,17 +19,16 @@ namespace Game.Level.EditorTools
 
         public static Result Parse(Texture2D tex, LevelEditorConfigSO config)
         {
-            if (tex == null) throw new System.ArgumentNullException(nameof(tex));
-            if (config == null) throw new System.ArgumentNullException(nameof(config));
-            if (config.Palette == null) throw new System.InvalidOperationException("Palette missing on LevelImportConfigSO.");
+            if (!tex) throw new System.ArgumentNullException(nameof(tex));
+            if (!config) throw new System.ArgumentNullException(nameof(config));
+            if (!config.Palette) throw new System.InvalidOperationException("Palette missing on LevelImportConfigSO.");
 
             var pixels = tex.GetPixels();
             int srcW = tex.width;
             int srcH = tex.height;
 
             // 1) Bounding box of opaque pixels.
-            if (!TryFindOpaqueBounds(pixels, srcW, srcH, config.AlphaThreshold,
-                    out int xMin, out int yMin, out int xMax, out int yMax))
+            if (!TryFindOpaqueBounds(pixels, srcW, srcH, config.AlphaThreshold, out int xMin, out int yMin, out int xMax, out int yMax))
             {
                 // Empty image -> empty level.
                 return new Result { Width = 0, Height = 0, Cubes = new ColorId[0] };
@@ -148,9 +146,7 @@ namespace Game.Level.EditorTools
                 {
                     int a = y * w + x;
                     int b = yMirror * w + x;
-                    var tmp = cubes[a];
-                    cubes[a] = cubes[b];
-                    cubes[b] = tmp;
+                    (cubes[a], cubes[b]) = (cubes[b], cubes[a]);
                 }
             }
         }

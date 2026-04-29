@@ -16,7 +16,7 @@ MonoBehaviour:
     type: 2}
   <MaxGridSize>k__BackingField: 35
   <AlphaThreshold>k__BackingField: 1
-  <CellOpaqueRatio>k__BackingField: 0.1
+  <CellOpaqueRatio>k__BackingField: 0.5
   <Palette>k__BackingField: {fileID: 11400000, guid: 3d2dee0ff5f9ead4a84c2a25426532d5,
     type: 2}
   <MaxAmmoPerPig>k__BackingField: 40

@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-using UnityEngine;
-using Game.Level.Data;
+using Core.Utils;
 using Game.Level.Configs;
+using Game.Level.Data;
+using Game.Level.Utils;
+using UnityEngine;
 
 namespace Game.Level.Services
 {
@@ -22,25 +24,25 @@ namespace Game.Level.Services
         {
             if (IsInitialized) return;
 
-            // Resources.LoadAll<TextAsset> from the configured folder.
             var assets = Resources.LoadAll<TextAsset>(_config.ResourcesFolder);
             var list = new List<LevelDefinition>(assets.Length);
 
-            // Sort by name so level_1, level_2, ... are in order.
-            System.Array.Sort(assets, (a, b) => string.CompareOrdinal(a.name, b.name));
-
-            for (int i = 0; i < assets.Length; i++)
+            foreach (var asset in assets)
             {
                 try
                 {
-                    var def = JsonUtility.FromJson<LevelDefinition>(assets[i].text);
-                    if (def != null) list.Add(def);
+                    var definition = LevelJsonRuntimeUtils.ParseToLevelDefinition(asset);
+                    if (definition != null) list.Add(definition);
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[LevelDataService] Failed to parse {assets[i].name}: {e.Message}");
+                    EditorLogger.LogError($"[LevelDataService] Failed to parse {asset.name}: {e.Message}");
                 }
             }
+
+            list.Sort(static (a, b) => a.LevelNumber.CompareTo(b.LevelNumber));
+
+            CheckDuplicates(list);
 
             _levels = list.ToArray();
             IsInitialized = true;
@@ -53,6 +55,15 @@ namespace Game.Level.Services
             if (index < 0 || index >= _levels.Length)
                 throw new System.ArgumentOutOfRangeException(nameof(index));
             return _levels[index];
+        }
+
+        private static void CheckDuplicates(List<LevelDefinition> sortedList)
+        {
+            for (int i = 1; i < sortedList.Count; i++)
+            {
+                if (sortedList[i].LevelNumber == sortedList[i - 1].LevelNumber)
+                    EditorLogger.LogError($"[LevelDataService] Duplicate LevelNumber: {sortedList[i].LevelNumber}");
+            }
         }
     }
 }
