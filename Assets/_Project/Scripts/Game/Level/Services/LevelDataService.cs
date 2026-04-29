@@ -14,6 +14,9 @@ namespace Game.Level.Services
 
         public bool IsInitialized { get; private set; }
         public int LevelCount => _levels?.Length ?? 0;
+        
+        public bool UseTestLevel => _config.UseTestLevel;
+        public int TestLevelIndex => Mathf.Min(_config.TestLevelIndex, LevelCount - 1);
 
         public LevelDataService(LevelDataServiceConfigSO config)
         {
@@ -48,14 +51,7 @@ namespace Game.Level.Services
             IsInitialized = true;
         }
 
-        public LevelDefinition GetLevel(int index)
-        {
-            if (!IsInitialized)
-                throw new System.InvalidOperationException("LevelDataService not initialized.");
-            if (index < 0 || index >= _levels.Length)
-                throw new System.ArgumentOutOfRangeException(nameof(index));
-            return _levels[index];
-        }
+        public LevelDefinition GetLevelDefinition(int index) => _levels[index];
 
         private static void CheckDuplicates(List<LevelDefinition> sortedList)
         {

@@ -9,7 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ebc0db3a82fc5484a9819b4b56a32cbd, type: 3}
-  m_Name: PoolServiceConfig
+  m_Script: {fileID: 11500000, guid: 99e9be5f097254647a0f84b9c8d834e1, type: 3}
+  m_Name: PixelCell
   m_EditorClassIdentifier: 
-  <PooledAssets>k__BackingField: []
+  <IsLazy>k__BackingField: 0
+  <PoolSize>k__BackingField: 1225
+  <PoolObject>k__BackingField: {fileID: 7192036083151762593, guid: d91d07fa4d860d54f92a806f5e258cac,
+    type: 3}

@@ -6,7 +6,7 @@ namespace Game.Level.EditorTools
 {
     public static class GreedyLevelValidator
     {
-        public static bool IsSolvable(string[] pixels, LaneJson[] lanes, int traySize)
+        public static bool IsSolvable(string[] pixels, LaneJson[] lanes, int unitSlotSize)
         {
             var counts = new Dictionary<ColorId, int>();
             for (int i = 0; i < pixels.Length; i++)
@@ -18,18 +18,18 @@ namespace Game.Level.EditorTools
             }
 
             int[] laneIdx = new int[lanes.Length];
-            var tray = new List<LaneUnitJson>(traySize + 1);
+            var unitSlots = new List<LaneUnitJson>(unitSlotSize + 1);
 
             int boardTotal = 0;
             foreach (var c in counts.Values) boardTotal += c;
 
             int safety = 0;
-            int safetyMax = SumLaneUnits(lanes) + traySize + 10;
+            int safetyMax = SumLaneUnits(lanes) + unitSlotSize + 10;
 
             while (boardTotal > 0)
             {
                 if (++safety > safetyMax * 4) return false;
-                if (TryFireFromTray(tray, counts, ref boardTotal)) continue;
+                if (TryFireFromUnitSlot(unitSlots, counts, ref boardTotal)) continue;
 
                 int bestLane = -1;
                 int bestScore = -1;
@@ -49,7 +49,7 @@ namespace Game.Level.EditorTools
 
                 if (bestLane == -1)
                 {
-                    while (TryFireFromTray(tray, counts, ref boardTotal)) { }
+                    while (TryFireFromUnitSlot(unitSlots, counts, ref boardTotal)) { }
                     return boardTotal == 0;
                 }
 
@@ -72,23 +72,23 @@ namespace Game.Level.EditorTools
 
                 if (leftover > 0)
                 {
-                    if (tray.Count >= traySize) return false;
-                    tray.Add(new LaneUnitJson { color = fired.color, ammo = leftover });
+                    if (unitSlots.Count >= unitSlotSize) return false;
+                    unitSlots.Add(new LaneUnitJson { color = fired.color, ammo = leftover });
                 }
 
-                while (TryFireFromTray(tray, counts, ref boardTotal)) { }
+                while (TryFireFromUnitSlot(unitSlots, counts, ref boardTotal)) { }
             }
 
             return true;
         }
 
-        private static bool TryFireFromTray(List<LaneUnitJson> tray, Dictionary<ColorId, int> counts, ref int boardTotal)
+        private static bool TryFireFromUnitSlot(List<LaneUnitJson> unitSlots, Dictionary<ColorId, int> counts, ref int boardTotal)
         {
             int bestIdx = -1;
             int bestScore = 0;
-            for (int i = 0; i < tray.Count; i++)
+            for (int i = 0; i < unitSlots.Count; i++)
             {
-                var p = tray[i];
+                var p = unitSlots[i];
                 var color = ParseColor(p.color);
                 int avail = counts.GetValueOrDefault(color, 0);
                 int score = Math.Min(p.ammo, avail);
@@ -96,13 +96,13 @@ namespace Game.Level.EditorTools
             }
             if (bestIdx < 0) return false;
 
-            var laneUnit = tray[bestIdx];
-            tray.RemoveAt(bestIdx);
+            var laneUnit = unitSlots[bestIdx];
+            unitSlots.RemoveAt(bestIdx);
             var laneUnitColor = ParseColor(laneUnit.color);
             int destroyed = ConsumeColor(counts, laneUnitColor, laneUnit.ammo);
             boardTotal -= destroyed;
             int leftover = laneUnit.ammo - destroyed;
-            if (leftover > 0) tray.Add(new LaneUnitJson { color = laneUnit.color, ammo = leftover });
+            if (leftover > 0) unitSlots.Add(new LaneUnitJson { color = laneUnit.color, ammo = leftover });
             return true;
         }
 

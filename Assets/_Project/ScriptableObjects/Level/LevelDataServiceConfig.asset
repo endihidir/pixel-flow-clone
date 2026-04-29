@@ -14,4 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <ResourcesFolder>k__BackingField: Levels
   <FileNameFormat>k__BackingField: level_{0}
-  <TraySize>k__BackingField: 5
+  <UnitSlotSize>k__BackingField: 5
+  <UseTestLevel>k__BackingField: 1
+  <TestLevelIndex>k__BackingField: 1
+  <TargetLevelIndex>k__BackingField: 0

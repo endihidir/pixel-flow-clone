@@ -16,3 +16,7 @@ MonoBehaviour:
   <IsMultitouchEnabled>k__BackingField: 0
   <PoolServiceConfig>k__BackingField: {fileID: 11400000, guid: e7c5786742289584fab50289c635fde7,
     type: 2}
+  <LevelDataServiceConfig>k__BackingField: {fileID: 11400000, guid: d106b239ad74f754b88e394b5e1e9adc,
+    type: 2}
+  <GameplayConfigContainer>k__BackingField: {fileID: 11400000, guid: be2cff0af8ca2774c8ef91dc7f4d126e,
+    type: 2}

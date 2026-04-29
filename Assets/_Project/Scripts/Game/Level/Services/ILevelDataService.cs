@@ -6,7 +6,9 @@ namespace Game.Level.Services
     {
         int LevelCount { get; }
         bool IsInitialized { get; }
+        bool UseTestLevel { get; }
+        int TestLevelIndex { get; }
         void Initialize();
-        LevelDefinition GetLevel(int index);
+        LevelDefinition GetLevelDefinition(int index);
     }
 }

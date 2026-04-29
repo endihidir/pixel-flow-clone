@@ -40,7 +40,7 @@ namespace Game.Level.EditorTools
                 attempts++;
                 var rng = new System.Random(seedBase + i);
                 lanes = LaneGenerator.Generate(parsed.Cubes, clampedLanes, preset, config, rng);
-                if (GreedyLevelValidator.IsSolvable(pixels, lanes, config.LevelDataServiceConfig.TraySize)) break;
+                if (GreedyLevelValidator.IsSolvable(pixels, lanes, config.LevelDataServiceConfig.UnitSlotSize)) break;
                 lanes = null;
             }
 

@@ -537,7 +537,7 @@ namespace Game.Level.EditorTools
 
         private void RunValidate()
         {
-            bool ok = GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, _editLevelJson.lanes, _config.LevelDataServiceConfig.TraySize);
+            bool ok = GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, _editLevelJson.lanes, _config.LevelDataServiceConfig.UnitSlotSize);
             _editStatus = ok ? "Validate: SOLVABLE" : "Validate: NOT SOLVABLE";
         }
 
@@ -556,7 +556,7 @@ namespace Game.Level.EditorTools
                 attempts++;
                 var rng = new System.Random(seedBase + i);
                 lanes = LaneGenerator.Generate(ToColorArray(_editLevelJson.pixels), laneCount, preset, _config, rng);
-                if (GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, lanes, _config.LevelDataServiceConfig.TraySize)) break;
+                if (GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, lanes, _config.LevelDataServiceConfig.UnitSlotSize)) break;
                 lanes = null;
             }
 
