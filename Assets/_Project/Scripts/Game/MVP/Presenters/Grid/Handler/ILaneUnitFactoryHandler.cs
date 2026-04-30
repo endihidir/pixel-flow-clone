@@ -5,6 +5,6 @@ namespace Game.Factory.Handlers
 {
     public interface ILaneUnitFactoryHandler
     {
-        void PopulatePixelCells(ColorId[] pixelColorIds, int width, int height, out PigUnitObject[,] pixelCells);
+        void PopulateLaneUnits(LaneDefinition[] lanes, out BaseLaneUnitObject[][] laneUnits);
     }
 }

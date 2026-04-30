@@ -1,9 +1,7 @@
+using Game.Factories;
 using Game.Lane.Item;
 using Game.Level.Configs;
 using Game.Level.Data;
-using Game.Utils;
-using Game.Factories;
-using UnityEngine;
 
 namespace Game.Factory.Handlers
 {
@@ -11,40 +9,39 @@ namespace Game.Factory.Handlers
     {
         private readonly ILaneUnitFactory _laneUnitFactory;
         private readonly ColorPaletteSO _colorPalette;
-        
+
         public LaneUnitFactoryHandler(ILaneUnitFactory laneUnitFactory, ColorPaletteSO colorPalette)
         {
             _laneUnitFactory = laneUnitFactory;
             _colorPalette = colorPalette;
         }
-        
-        public void PopulatePixelCells(ColorId[] pixelColorIds, int width, int height, out PigUnitObject[,] pixelCells)
+
+        public void PopulateLaneUnits(LaneDefinition[] lanes, out BaseLaneUnitObject[][] laneUnits)
         {
-            pixelCells = new PigUnitObject[width, height];
+            laneUnits = new BaseLaneUnitObject[lanes.Length][];
 
-            for (var i = 0; i < width * height; i++)
+            for (int li = 0; li < lanes.Length; li++)
             {
-                var coord = GridIndexUtil.ToCoord(i, width);
-                var x = coord.x;
-                var y = coord.y;
+                var laneDef = lanes[li];
+                var unitCount = laneDef.UnitCount;
+                var units = new BaseLaneUnitObject[unitCount];
 
-                var colorId = pixelColorIds[i];
+                for (int ui = 0; ui < unitCount; ui++)
+                {
+                    var unitDef = laneDef.LaneUnits[ui];
+                    units[ui] = CreateLaneUnit(unitDef.Color, unitDef.Ammo);
+                }
 
-                if (colorId == ColorId.None) continue;
-
-                pixelCells[x, y] = CreatePixelCell(colorId, coord);
+                laneUnits[li] = units;
             }
         }
-        
-        private PigUnitObject CreatePixelCell(ColorId colorId, Vector2Int coord)
-        {
-            var pixelCell = _laneUnitFactory.GetLaneUnit<PigUnitObject>();
-            
-            var color = _colorPalette.GetColor(colorId);
-            
-            //pixelCell.Initialize(colorId, color);
 
-            return pixelCell;
+        private BaseLaneUnitObject CreateLaneUnit(ColorId colorId, int ammo)
+        {
+            var unit = _laneUnitFactory.GetLaneUnit<PigUnitObject>();
+            var color = _colorPalette.GetColor(colorId);
+            unit.Initialize(colorId, ammo, color);
+            return unit;
         }
     }
 }

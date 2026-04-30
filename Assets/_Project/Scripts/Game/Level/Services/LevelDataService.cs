@@ -17,6 +17,8 @@ namespace Game.Level.Services
         
         public bool UseTestLevel => _config.UseTestLevel;
         public int TestLevelIndex => Mathf.Min(_config.TestLevelIndex, LevelCount - 1);
+        public int GetUnitSlotSize() => _config.UnitSlotSize;
+        
 
         public LevelDataService(LevelDataServiceConfigSO config)
         {

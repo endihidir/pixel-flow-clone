@@ -32,6 +32,7 @@ Material:
   - TCP2_RIM_LIGHTING_LIGHTMASK
   - TCP2_SHADOW_LIGHT_COLOR
   - TCP2_UV_NORMALS_FULL
+  - _RECEIVE_SHADOWS_OFF
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -132,7 +133,7 @@ Material:
     - _BumpScale: 1
     - _ClearCoatMask: 0
     - _ClearCoatSmoothness: 0
-    - _Cull: 0
+    - _Cull: 2
     - _Cutoff: 0.5
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
@@ -179,7 +180,7 @@ Material:
     - _RampThreshold: 0.767
     - _RampType: 0
     - _ReceiveShadows: 0
-    - _ReceiveShadowsOff: 1
+    - _ReceiveShadowsOff: 0
     - _ReflectionMapType: 0
     - _ReflectionSmoothness: 0.5
     - _RenderingMode: 0
@@ -216,7 +217,7 @@ Material:
     - _WorkflowMode: 1
     - _ZWrite: 1
     m_Colors:
-    - _BaseColor: {r: 1, g: 0.74509805, b: 0.17254902, a: 1}
+    - _BaseColor: {r: 0.9748427, g: 0, b: 0.60062134, a: 1}
     - _Color: {r: 0.99607843, g: 0.4117647, b: 0.7843138, a: 1}
     - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
     - _HColor: {r: 1, g: 1, b: 1, a: 1}

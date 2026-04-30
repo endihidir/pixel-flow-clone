@@ -8,6 +8,7 @@ namespace Game.Level.Services
         int GetGridWidth();
         int GetGridHeight();
         int GetLevelNumber(bool useLevelCompletionCount = false);
+        int GetUnitSlotSize();
         Vector2Int GetGridSize();
         LaneDefinition[] GetLanes();
         ColorId[] GetPixels();

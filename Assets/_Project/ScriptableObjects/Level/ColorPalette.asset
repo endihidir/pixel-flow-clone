@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Entries>k__BackingField:
   - Id: 1
-    Color: {r: 0.86, g: 0.12, b: 0.12, a: 1}
+    Color: {r: 0.96470594, g: 0.21568629, b: 0.121568635, a: 1}
   - Id: 2
     Color: {r: 1, g: 0.55, b: 0.1, a: 1}
   - Id: 3

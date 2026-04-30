@@ -1,4 +1,5 @@
 using System;
+using Core.Utils;
 using Game.Grid.Item;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace Game.Views
             return new Vector3(_startPosition.x + coord.x * step, _startPosition.y, _startPosition.z - coord.y * step);
         }
 
-        public void PlacePixel(PixelCellObject pixelCellObject, Vector2Int coord)
+        public void PlacePixel(BasePixelCellObject pixelCellObject, Vector2Int coord)
         {
             pixelCellObject.SetParent(PixelsParent);
             pixelCellObject.SetPosition(GetWorldPosition(coord));
@@ -45,7 +46,7 @@ namespace Game.Views
         {
             if (!AreaPointA || !AreaPointB)
             {
-                Debug.LogError("PixelGridView area points are missing.");
+                EditorLogger.LogError("PixelGridView area points are missing.");
                 return;
             }
 
