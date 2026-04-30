@@ -14,23 +14,33 @@ namespace Game.Views
         [field: SerializeField] public float Spacing { get; private set; } = 0f;
         [field: SerializeField] public float PixelHeight { get; private set; } = 1f;
         
-        private int _width;
-        private int _height;
-        private float _cellSize;
+        [field: Header("Lane Orbit Path Settings")]
+        [field: SerializeField] public float OrbitOffset { get; private set; } = 1f;
+        [field: SerializeField] public float LaunchOffsetFromLeft { get; private set; } = 1f;
+        
+        [field: SerializeField, Range(0f, 2f)] public float CornerRadius { get; private set; } = 0.5f;
+        [field: SerializeField, Range(0f, 2f)] public float CornerOutwardOffset { get; private set; } = 0f;
+        [field: SerializeField, Range(1, 8)] public int CornerSegments { get; private set; } = 4;
+
         private Vector3 _startPosition;
+        public Vector3 AreaPointAPosition => AreaPointA.position;
+        public Vector3 AreaPointBPosition => AreaPointB.position;
+        public float CellSize { get; private set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
         public event Action OnViewInitialized;
 
         public void Initialize(int width, int height)
         {
-            _width = width;
-            _height = height;
+            Width = width;
+            Height = height;
             CalculateLayout();
             OnViewInitialized?.Invoke();
         }
 
         public Vector3 GetWorldPosition(Vector2Int coord)
         {
-            var step = _cellSize + Spacing;
+            var step = CellSize + Spacing;
 
             return new Vector3(_startPosition.x + coord.x * step, _startPosition.y, _startPosition.z - coord.y * step);
         }
@@ -39,7 +49,7 @@ namespace Game.Views
         {
             pixelCellObject.SetParent(PixelsParent);
             pixelCellObject.SetPosition(GetWorldPosition(coord));
-            pixelCellObject.SetScale(new Vector3(_cellSize, PixelHeight, _cellSize));
+            pixelCellObject.SetScale(new Vector3(CellSize, PixelHeight, CellSize));
         }
 
         private void CalculateLayout()
@@ -62,20 +72,20 @@ namespace Game.Views
             var areaWidth = maxX - minX;
             var areaDepth = maxZ - minZ;
 
-            var sizeByWidth = (areaWidth - Spacing * (_width - 1)) / _width;
-            var sizeByDepth = (areaDepth - Spacing * (_height - 1)) / _height;
+            var sizeByWidth = (areaWidth - Spacing * (Width - 1)) / Width;
+            var sizeByDepth = (areaDepth - Spacing * (Height - 1)) / Height;
 
-            _cellSize = Mathf.Min(sizeByWidth, sizeByDepth);
+            CellSize = Mathf.Min(sizeByWidth, sizeByDepth);
 
-            var totalWidth = _width * _cellSize + (_width - 1) * Spacing;
-            var totalDepth = _height * _cellSize + (_height - 1) * Spacing;
+            var totalWidth = Width * CellSize + (Width - 1) * Spacing;
+            var totalDepth = Height * CellSize + (Height - 1) * Spacing;
 
             var centerX = (minX + maxX) * 0.5f;
             var centerZ = (minZ + maxZ) * 0.5f;
             var y = PixelRoot.position.y;
 
-            var startX = centerX - totalWidth * 0.5f + _cellSize * 0.5f;
-            var startZ = centerZ + totalDepth * 0.5f - _cellSize * 0.5f;
+            var startX = centerX - totalWidth * 0.5f + CellSize * 0.5f;
+            var startZ = centerZ + totalDepth * 0.5f - CellSize * 0.5f;
 
             _startPosition = new Vector3(startX, y, startZ);
         }

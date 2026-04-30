@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -459,9 +460,9 @@ namespace Game.Level.EditorTools
             {
                 Color previousColor = GUI.color;
 
-                if (_editStatus.StartsWith("Solvable"))
+                if (_editStatus.StartsWith("Solvable", StringComparison.OrdinalIgnoreCase))
                     GUI.color = Color.green;
-                else if (_editStatus.StartsWith("Not solvable"))
+                else if (_editStatus.StartsWith("Not solvable", StringComparison.OrdinalIgnoreCase))
                     GUI.color = Color.red;
 
                 EditorGUILayout.HelpBox(_editStatus, MessageType.None);

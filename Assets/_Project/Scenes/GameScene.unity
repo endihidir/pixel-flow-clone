@@ -602,6 +602,7 @@ GameObject:
   m_Component:
   - component: {fileID: 348591126}
   - component: {fileID: 348591127}
+  - component: {fileID: 348591128}
   m_Layer: 0
   m_Name: PixelGridView
   m_TagString: Untagged
@@ -646,6 +647,26 @@ MonoBehaviour:
   <AreaPointB>k__BackingField: {fileID: 1338025042}
   <Spacing>k__BackingField: 0
   <PixelHeight>k__BackingField: 1.5
+  <OrbitOffset>k__BackingField: 3.5
+  <LaunchOffsetFromLeft>k__BackingField: 0
+  <CornerRadius>k__BackingField: 0.5
+  <CornerOutwardOffset>k__BackingField: 2
+  <CornerSegments>k__BackingField: 8
+--- !u!114 &348591128
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348591125}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27c4bac1d29af7a419aac3be99773f1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pixelGridView: {fileID: 348591127}
+  _nodeRadius: 0.4
+  _drawNodeIndices: 1
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -1552,7 +1573,7 @@ Transform:
   m_GameObject: {fileID: 1976091106}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -31}
+  m_LocalPosition: {x: 0, y: 0, z: -29.98}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:

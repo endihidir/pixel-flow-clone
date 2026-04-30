@@ -34,6 +34,8 @@ namespace Game.Bootstrappers
 
             IPixelCellFactory pixelCellFactory = new PixelCellFactory(poolService);
             ILaneUnitFactory laneUnitFactory = new LaneUnitFactory(poolService);
+            IProjectileFactory projectileFactory = new ProjectileFactory(poolService);
+            
             IPixelCellFactoryHandler pixelCellFactoryHandler = new PixelCellFactoryHandler(pixelCellFactory, gameplayConfig.ColorPalette);
             ILaneUnitFactoryHandler laneUnitFactoryHandler = new LaneUnitFactoryHandler(laneUnitFactory, gameplayConfig.ColorPalette);
 

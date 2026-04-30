@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: PixelCell
   m_EditorClassIdentifier: 
   <IsLazy>k__BackingField: 0
-  <PoolSize>k__BackingField: 1225
+  <PoolSize>k__BackingField: 600
   <PoolObject>k__BackingField: {fileID: 7192036083151762593, guid: d91d07fa4d860d54f92a806f5e258cac,
     type: 3}
