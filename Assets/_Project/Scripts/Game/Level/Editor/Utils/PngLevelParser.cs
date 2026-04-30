@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEditor;
 using Game.Level.Data;
 
 namespace Game.Level.EditorTools
@@ -19,16 +20,22 @@ namespace Game.Level.EditorTools
 
         public static Result Parse(Texture2D tex, LevelEditorConfigSO config)
         {
+            return Parse(tex, config, LevelTextureImportSettings.FromConfig(config));
+        }
+
+        public static Result Parse(Texture2D tex, LevelEditorConfigSO config, LevelTextureImportSettings settings)
+        {
             if (!tex) throw new System.ArgumentNullException(nameof(tex));
             if (!config) throw new System.ArgumentNullException(nameof(config));
             if (!config.Palette) throw new System.InvalidOperationException("Palette missing on LevelImportConfigSO.");
 
+            EnsureTextureReadable(tex);
             var pixels = tex.GetPixels();
             int srcW = tex.width;
             int srcH = tex.height;
 
             // 1) Bounding box of opaque pixels.
-            if (!TryFindOpaqueBounds(pixels, srcW, srcH, config.AlphaThreshold, out int xMin, out int yMin, out int xMax, out int yMax))
+            if (!TryFindOpaqueBounds(pixels, srcW, srcH, settings.AlphaThreshold, out int xMin, out int yMin, out int xMax, out int yMax))
             {
                 // Empty image -> empty level.
                 return new Result { Width = 0, Height = 0, Cubes = new ColorId[0] };
@@ -41,13 +48,13 @@ namespace Game.Level.EditorTools
             int targetW, targetH;
             if (boundsW >= boundsH)
             {
-                targetW = config.MaxGridSize;
-                targetH = Mathf.Max(1, Mathf.RoundToInt(boundsH * (float)config.MaxGridSize / boundsW));
+                targetW = settings.MaxGridSize;
+                targetH = Mathf.Max(1, Mathf.RoundToInt(boundsH * (float)settings.MaxGridSize / boundsW));
             }
             else
             {
-                targetH = config.MaxGridSize;
-                targetW = Mathf.Max(1, Mathf.RoundToInt(boundsW * (float)config.MaxGridSize / boundsH));
+                targetH = settings.MaxGridSize;
+                targetW = Mathf.Max(1, Mathf.RoundToInt(boundsW * (float)settings.MaxGridSize / boundsH));
             }
 
             // 3) Per-cell sampling.
@@ -83,7 +90,7 @@ namespace Game.Level.EditorTools
                         for (int px = px0; px < px1; px++)
                         {
                             var c = pixels[py * srcW + px];
-                            if (c.a < config.AlphaThreshold) continue;
+                            if (c.a < settings.AlphaThreshold) continue;
                             opaqueCount++;
                             var id = config.Palette.FindClosest(c);
                             if (votes.TryGetValue(id, out int n)) votes[id] = n + 1;
@@ -92,7 +99,7 @@ namespace Game.Level.EditorTools
                     }
 
                     float opaqueRatio = opaqueCount / (float)totalPixels;
-                    if (opaqueRatio < config.CellOpaqueRatio || votes.Count == 0)
+                    if (opaqueRatio < settings.CellOpaqueRatio || votes.Count == 0)
                     {
                         cubes[cy * targetW + cx] = ColorId.None;
                         continue;
@@ -114,6 +121,18 @@ namespace Game.Level.EditorTools
             FlipVertical(cubes, targetW, targetH);
 
             return new Result { Width = targetW, Height = targetH, Cubes = cubes };
+        }
+
+        private static void EnsureTextureReadable(Texture2D tex)
+        {
+            string path = AssetDatabase.GetAssetPath(tex);
+            if (string.IsNullOrEmpty(path)) return;
+
+            var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (importer == null || importer.isReadable) return;
+
+            importer.isReadable = true;
+            importer.SaveAndReimport();
         }
 
         private static bool TryFindOpaqueBounds(Color[] pixels, int w, int h, float alphaThreshold,

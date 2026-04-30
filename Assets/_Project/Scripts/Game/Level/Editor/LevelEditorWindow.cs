@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using Game.Level.Data;
 using UnityEditor;
 using UnityEngine;
@@ -10,28 +11,40 @@ namespace Game.Level.EditorTools
     {
         private const int LaneMin = 3;
         private const int LaneMax = 5;
+        private const string EditorConfigPathKey = "PixelFlow.LevelEditor.ConfigPath";
+        private const string SourceTextureFolderKey = "PixelFlow.LevelEditor.SourceTextureFolder";
+        private const string LevelJsonFolderKey = "PixelFlow.LevelEditor.LevelJsonFolder";
+        private const string TextureSettingsKey = "PixelFlow.LevelEditor.TextureSettings";
 
         private enum Tab { Generate, Load, Edit }
         private enum SaveMode { NewFile, Overwrite }
 
-        // Shared
+        private sealed class TextureEntry
+        {
+            public Texture2D Texture;
+            public LevelTextureImportSettings Settings;
+        }
+
         private LevelEditorConfigSO _config;
         private Tab _tab = Tab.Generate;
 
-        // Generate tab
-        private List<Texture2D> _pngs = new();
+        private readonly List<TextureEntry> _textureEntries = new();
+        private readonly List<TextAsset> _jsonAssets = new();
+        private readonly Dictionary<string, LevelTextureImportSettings> _textureSettingsByPath = new();
+
+        private string _sourceTextureFolder = "Assets";
+        private string _levelJsonFolder = "Assets";
         private int _laneCount = 3;
         private int _difficultyIndex = 1;
         private string _fileNamePrefix = "level";
         private int _startLevelNumber = 1;
         private Vector2 _genScroll;
+        private Vector2 _loadScroll;
         private string _lastReport;
         private bool _laneCountInitialized;
 
-        // Load tab
         private TextAsset _loadJson;
 
-        // Edit tab
         private LevelJson _editLevelJson;
         private string _editSourcePath;
         private SaveMode _editSaveMode;
@@ -45,8 +58,19 @@ namespace Game.Level.EditorTools
         public static void Open()
         {
             var w = GetWindow<LevelEditorWindow>("Level Editor");
-            w.minSize = new Vector2(520, 480);
+            w.minSize = new Vector2(680, 520);
             w.Show();
+        }
+
+        private void OnEnable()
+        {
+            _sourceTextureFolder = EditorPrefs.GetString(SourceTextureFolderKey, "Assets");
+            _levelJsonFolder = EditorPrefs.GetString(LevelJsonFolderKey, "Assets");
+            LoadTextureSettingsPrefs();
+
+            string configPath = EditorPrefs.GetString(EditorConfigPathKey, string.Empty);
+            if (!string.IsNullOrEmpty(configPath))
+                _config = AssetDatabase.LoadAssetAtPath<LevelEditorConfigSO>(configPath);
         }
 
         private void OnGUI()
@@ -66,12 +90,17 @@ namespace Game.Level.EditorTools
             }
         }
 
-        // ---------- Common ----------
-
         private void DrawConfigField()
         {
-            _config = (LevelEditorConfigSO)EditorGUILayout.ObjectField(
-                "Editor Config", _config, typeof(LevelEditorConfigSO), false);
+            EditorGUI.BeginChangeCheck();
+            _config = (LevelEditorConfigSO)EditorGUILayout.ObjectField("Editor Config", _config, typeof(LevelEditorConfigSO), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                string path = _config != null ? AssetDatabase.GetAssetPath(_config) : string.Empty;
+                EditorPrefs.SetString(EditorConfigPathKey, path);
+                _laneCountInitialized = false;
+            }
+
             if (_config == null)
                 EditorGUILayout.HelpBox("Assign a LevelEditorConfigSO to begin.", MessageType.Info);
         }
@@ -80,6 +109,8 @@ namespace Game.Level.EditorTools
         {
             if (_laneCountInitialized) return;
             _laneCount = Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
+            if (_levelJsonFolder == "Assets" && !string.IsNullOrEmpty(_config.OutputFolder))
+                _levelJsonFolder = _config.OutputFolder;
             _laneCountInitialized = true;
         }
 
@@ -90,8 +121,6 @@ namespace Game.Level.EditorTools
             int newIdx = GUILayout.Toolbar(idx, new[] { "Generate", "Load", "Edit" });
             if (newIdx != idx) _tab = (Tab)newIdx;
         }
-
-        // ---------- Generate Tab ----------
 
         private void DrawGenerateTab()
         {
@@ -104,7 +133,7 @@ namespace Game.Level.EditorTools
                 var names = new string[presets.Length];
                 for (int i = 0; i < presets.Length; i++)
                     names[i] = string.IsNullOrEmpty(presets[i].Name) ? $"Preset {i}" : presets[i].Name;
-                _difficultyIndex = EditorGUILayout.Popup("Difficulty", _difficultyIndex, names);
+                _difficultyIndex = EditorGUILayout.Popup("Default Difficulty", Mathf.Clamp(_difficultyIndex, 0, presets.Length - 1), names);
             }
             else
             {
@@ -114,52 +143,32 @@ namespace Game.Level.EditorTools
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Output", EditorStyles.boldLabel);
             _fileNamePrefix = EditorGUILayout.TextField("File Prefix", _fileNamePrefix);
-            _startLevelNumber = EditorGUILayout.IntField("Start Level Number", _startLevelNumber);
+            _startLevelNumber = EditorGUILayout.IntField("Default Start Level Number", _startLevelNumber);
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Source PNGs", EditorStyles.boldLabel);
-
-            _genScroll = EditorGUILayout.BeginScrollView(_genScroll, GUILayout.Height(140));
-            for (int i = 0; i < _pngs.Count; i++)
-            {
-                EditorGUILayout.BeginHorizontal();
-                Object current = _pngs[i];
-                var dropped = EditorGUILayout.ObjectField(current, typeof(Object), false);
-                if (dropped != null && !(dropped is Texture2D) && !(dropped is Sprite))
-                    dropped = current;
-                _pngs[i] = ResolveTexture(dropped);
-                if (GUILayout.Button("X", GUILayout.Width(24)))
-                {
-                    _pngs.RemoveAt(i);
-                    EditorGUILayout.EndHorizontal();
-                    break;
-                }
-                EditorGUILayout.EndHorizontal();
-            }
-            EditorGUILayout.EndScrollView();
+            EditorGUILayout.LabelField("Source Textures", EditorStyles.boldLabel);
+            DrawFolderField("Texture Folder", ref _sourceTextureFolder, SourceTextureFolderKey, RefreshTexturesFromFolder);
 
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Add Slot")) _pngs.Add(null);
-            if (GUILayout.Button("Use Selected"))
-            {
-                _pngs.Clear();
-                foreach (var o in Selection.objects)
-                {
-                    var t = ResolveTexture(o);
-                    if (t != null) _pngs.Add(t);
-                }
-            }
-            if (GUILayout.Button("Clear")) _pngs.Clear();
+            if (GUILayout.Button("Refresh Textures")) RefreshTexturesFromFolder();
+            if (GUILayout.Button("Use Selected Textures")) UseSelectedTextures();
+            if (GUILayout.Button("Add Slot")) AddTextureEntry(null);
+            if (GUILayout.Button("Clear")) _textureEntries.Clear();
             EditorGUILayout.EndHorizontal();
 
+            _genScroll = EditorGUILayout.BeginScrollView(_genScroll, GUILayout.Height(420));
+            for (int i = 0; i < _textureEntries.Count; i++)
+                DrawTextureEntry(i);
+            EditorGUILayout.EndScrollView();
+
             EditorGUILayout.Space();
-            using (new EditorGUI.DisabledScope(_pngs.Count == 0))
+            using (new EditorGUI.DisabledScope(GetValidTextureCount() == 0))
             {
                 if (GUILayout.Button("Import All", GUILayout.Height(28)))
                     ImportAll();
             }
 
-            using (new EditorGUI.DisabledScope(_pngs.Count != 1 || _pngs[0] == null))
+            using (new EditorGUI.DisabledScope(GetValidTextureCount() != 1))
             {
                 if (GUILayout.Button("Import & Edit (single)", GUILayout.Height(22)))
                     ImportAndEditSingle();
@@ -173,53 +182,87 @@ namespace Game.Level.EditorTools
             }
         }
 
-        private void ImportAll()
+        private void DrawTextureEntry(int index)
         {
-            var sb = new System.Text.StringBuilder();
-            int idx = _startLevelNumber;
-            for (int i = 0; i < _pngs.Count; i++)
-            {
-                var png = _pngs[i];
-                if (png == null) continue;
-                string outName = $"{_fileNamePrefix}_{idx}";
-                var result = LevelImportPipeline.Import(png, _laneCount, _difficultyIndex, _config, outName, idx);
-                if (result.Success)
-                    sb.AppendLine($"OK  {png.name} -> {outName}.json (level {idx}, attempts: {result.Attempts})");
-                else
-                    sb.AppendLine($"FAIL  {png.name}: {result.Error}");
-                idx++;
-            }
-            _lastReport = sb.ToString();
-            Repaint();
-        }
+            var entry = _textureEntries[index];
 
-        private void ImportAndEditSingle()
-        {
-            var png = _pngs[0];
-            string outName = $"{_fileNamePrefix}_{_startLevelNumber}";
-            var result = LevelImportPipeline.Import(png, _laneCount, _difficultyIndex, _config, outName, _startLevelNumber);
-            if (!result.Success)
+            EditorGUILayout.BeginVertical(GUI.skin.box);
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUI.BeginChangeCheck();
+            var texture = (Texture2D)EditorGUILayout.ObjectField(entry.Texture, typeof(Texture2D), false, GUILayout.Width(96), GUILayout.Height(96));
+            if (EditorGUI.EndChangeCheck())
             {
-                _lastReport = $"FAIL  {png.name}: {result.Error}";
+                entry.Texture = texture;
+                entry.Settings = GetStoredOrDefaultSettings(texture, _startLevelNumber + index);
+            }
+
+            if (GUILayout.Button("X", GUILayout.Width(24)))
+            {
+                _textureEntries.RemoveAt(index);
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
                 return;
             }
-            _editLevelJson = result.LevelJson;
-            _editSourcePath = result.OutputPath;
-            _editSaveMode = SaveMode.NewFile;
-            _selectedLane = -1;
-            _selectedlaneUnit = -1;
-            _editStatus = $"Generated from {png.name}.";
-            _tab = Tab.Edit;
-            Repaint();
-        }
 
-        // ---------- Load Tab ----------
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUI.BeginChangeCheck();
+            var settings = entry.Settings;
+            settings.LevelNumber = EditorGUILayout.IntField("Level Number", settings.LevelNumber);
+
+            var presets = _config.DifficultyPresets;
+            if (presets != null && presets.Length > 0)
+            {
+                var names = new string[presets.Length];
+                for (int i = 0; i < presets.Length; i++)
+                    names[i] = string.IsNullOrEmpty(presets[i].Name) ? $"Preset {i}" : presets[i].Name;
+
+                settings.DifficultyIndex = EditorGUILayout.Popup("Difficulty", Mathf.Clamp(settings.DifficultyIndex, 0, presets.Length - 1), names);
+            }
+
+            settings.MaxGridSize = EditorGUILayout.IntField("Max Grid Size", settings.MaxGridSize);
+            settings.AlphaThreshold = EditorGUILayout.Slider("Alpha Threshold", settings.AlphaThreshold, 0f, 1f);
+            settings.CellOpaqueRatio = EditorGUILayout.Slider("Cell Opaque Ratio", settings.CellOpaqueRatio, 0f, 1f);
+            settings.MaxGridSize = Mathf.Max(1, settings.MaxGridSize);
+            settings.LevelNumber = Mathf.Max(1, settings.LevelNumber);
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                entry.Settings = settings;
+                StoreTextureSettings(entry.Texture, settings);
+                SaveTextureSettingsPrefs();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
 
         private void DrawLoadTab()
         {
             EditorGUILayout.LabelField("Load Existing JSON", EditorStyles.boldLabel);
-            _loadJson = (TextAsset)EditorGUILayout.ObjectField(
-                "Level JSON", _loadJson, typeof(TextAsset), false);
+            DrawFolderField("JSON Folder", ref _levelJsonFolder, LevelJsonFolderKey, RefreshJsonAssetsFromFolder);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Refresh JSON List")) RefreshJsonAssetsFromFolder();
+            EditorGUILayout.EndHorizontal();
+
+            _loadScroll = EditorGUILayout.BeginScrollView(_loadScroll, GUILayout.Height(220));
+            for (int i = 0; i < _jsonAssets.Count; i++)
+            {
+                var json = _jsonAssets[i];
+                if (json == null) continue;
+
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.ObjectField(json, typeof(TextAsset), false);
+                if (GUILayout.Button("Open", GUILayout.Width(70)))
+                    LoadFromAsset(json);
+                EditorGUILayout.EndHorizontal();
+            }
+            EditorGUILayout.EndScrollView();
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Manual", EditorStyles.boldLabel);
+            _loadJson = (TextAsset)EditorGUILayout.ObjectField("Level JSON", _loadJson, typeof(TextAsset), false);
 
             using (new EditorGUI.DisabledScope(_loadJson == null))
             {
@@ -227,13 +270,139 @@ namespace Game.Level.EditorTools
                     LoadFromAsset(_loadJson);
             }
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Or pick by path", EditorStyles.boldLabel);
             if (GUILayout.Button("Browse..."))
             {
-                string path = EditorUtility.OpenFilePanel("Open Level JSON", _config.OutputFolder, "json");
+                string path = EditorUtility.OpenFilePanel("Open Level JSON", AssetPathToAbsolute(_levelJsonFolder), "json");
                 if (!string.IsNullOrEmpty(path)) LoadFromPath(path);
             }
+        }
+
+        private void DrawFolderField(string label, ref string folder, string prefsKey, System.Action refreshAction)
+        {
+            EditorGUILayout.BeginHorizontal();
+
+            EditorGUI.BeginChangeCheck();
+            folder = EditorGUILayout.TextField(label, folder);
+            if (EditorGUI.EndChangeCheck())
+                EditorPrefs.SetString(prefsKey, folder);
+
+            if (GUILayout.Button("Browse", GUILayout.Width(70)))
+            {
+                string selected = EditorUtility.OpenFolderPanel(label, AssetPathToAbsolute(folder), string.Empty);
+                if (!string.IsNullOrEmpty(selected))
+                {
+                    folder = AbsolutePathToAssetPath(selected);
+                    EditorPrefs.SetString(prefsKey, folder);
+                    refreshAction?.Invoke();
+                }
+            }
+
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void RefreshTexturesFromFolder()
+        {
+            _textureEntries.Clear();
+
+            foreach (string assetPath in FindAssetPathsRecursive(_sourceTextureFolder, "t:Texture2D", ".png", ".jpg", ".jpeg", ".tga", ".psd"))
+            {
+                var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
+                if (tex != null) AddTextureEntry(tex);
+            }
+
+            _lastReport = $"Found {_textureEntries.Count} texture(s).";
+        }
+
+        private void RefreshJsonAssetsFromFolder()
+        {
+            _jsonAssets.Clear();
+
+            foreach (string assetPath in FindAssetPathsRecursive(_levelJsonFolder, "t:TextAsset", ".json"))
+            {
+                var json = AssetDatabase.LoadAssetAtPath<TextAsset>(assetPath);
+                if (json != null) _jsonAssets.Add(json);
+            }
+        }
+
+        private void UseSelectedTextures()
+        {
+            _textureEntries.Clear();
+            foreach (var obj in Selection.objects)
+            {
+                if (obj is Texture2D tex)
+                    AddTextureEntry(tex);
+            }
+        }
+
+        private void AddTextureEntry(Texture2D texture)
+        {
+            _textureEntries.Add(new TextureEntry
+            {
+                Texture = texture,
+                Settings = GetStoredOrDefaultSettings(texture, _startLevelNumber + GetValidTextureCount())
+            });
+        }
+
+        private void ImportAll()
+        {
+            var sb = new StringBuilder();
+
+            for (int i = 0; i < _textureEntries.Count; i++)
+            {
+                var entry = _textureEntries[i];
+                var png = entry.Texture;
+                if (png == null) continue;
+
+                int levelNumber = Mathf.Max(1, entry.Settings.LevelNumber);
+                int difficultyIndex = GetClampedDifficultyIndex(entry.Settings.DifficultyIndex);
+                string outName = $"{_fileNamePrefix}_{levelNumber}";
+                var result = LevelImportPipeline.Import(png, _laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
+
+                if (result.Success)
+                    sb.AppendLine($"OK  {png.name} -> {outName}.json (level {levelNumber}, difficulty: {difficultyIndex}, attempts: {result.Attempts})");
+                else
+                    sb.AppendLine($"FAIL  {png.name}: {result.Error}");
+            }
+
+            _lastReport = sb.ToString();
+            RefreshJsonAssetsFromFolder();
+            Repaint();
+        }
+
+        private void ImportAndEditSingle()
+        {
+            TextureEntry entry = null;
+            for (int i = 0; i < _textureEntries.Count; i++)
+            {
+                if (_textureEntries[i].Texture != null)
+                {
+                    entry = _textureEntries[i];
+                    break;
+                }
+            }
+
+            if (entry == null) return;
+
+            var png = entry.Texture;
+            int levelNumber = Mathf.Max(1, entry.Settings.LevelNumber);
+            int difficultyIndex = GetClampedDifficultyIndex(entry.Settings.DifficultyIndex);
+            string outName = $"{_fileNamePrefix}_{levelNumber}";
+            var result = LevelImportPipeline.Import(png, _laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
+            if (!result.Success)
+            {
+                _lastReport = $"FAIL  {png.name}: {result.Error}";
+                return;
+            }
+
+            _editLevelJson = result.LevelJson;
+            _editSourcePath = result.OutputPath;
+            _editSaveMode = SaveMode.NewFile;
+            _selectedLane = -1;
+            _selectedlaneUnit = -1;
+            _editStatus = $"Generated from {png.name}.";
+            _tab = Tab.Edit;
+            RefreshJsonAssetsFromFolder();
+            Repaint();
         }
 
         private void LoadFromAsset(TextAsset asset)
@@ -276,8 +445,6 @@ namespace Game.Level.EditorTools
             }
         }
 
-        // ---------- Edit Tab ----------
-
         private void DrawEditTab()
         {
             if (_editLevelJson == null)
@@ -286,10 +453,8 @@ namespace Game.Level.EditorTools
                 return;
             }
 
-            // Toolbar
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label($"Size: {_editLevelJson.grid_width}x{_editLevelJson.grid_height}    Lanes: {_editLevelJson.lanes?.Length ?? 0}",
-                EditorStyles.miniLabel);
+            GUILayout.Label($"Size: {_editLevelJson.grid_width}x{_editLevelJson.grid_height}    Lanes: {_editLevelJson.lanes?.Length ?? 0}", EditorStyles.miniLabel);
             GUILayout.FlexibleSpace();
 
             EditorGUI.BeginChangeCheck();
@@ -345,9 +510,7 @@ namespace Game.Level.EditorTools
                     int flat = y * w + x;
                     var id = ParseColor(_editLevelJson.pixels[flat]);
                     var cellRect = new Rect(rect.x + x * cell, rect.y + y * cell, cell - 1, cell - 1);
-                    var color = id == ColorId.None
-                        ? new Color(0.18f, 0.10f, 0.25f)
-                        : (palette != null ? palette.GetColor(id) : Color.magenta);
+                    var color = id == ColorId.None ? new Color(0.18f, 0.10f, 0.25f) : (palette != null ? palette.GetColor(id) : Color.magenta);
                     EditorGUI.DrawRect(cellRect, color);
 
                     if (e.type == EventType.MouseDown && cellRect.Contains(e.mousePosition))
@@ -442,9 +605,7 @@ namespace Game.Level.EditorTools
         private void DrawlaneUnitDetailPanel()
         {
             EditorGUILayout.LabelField("Selected laneUnit", EditorStyles.boldLabel);
-            if (_selectedLane < 0 || _selectedlaneUnit < 0
-                || _selectedLane >= _editLevelJson.lanes.Length
-                || _selectedlaneUnit >= _editLevelJson.lanes[_selectedLane].laneUnits.Length)
+            if (_selectedLane < 0 || _selectedlaneUnit < 0 || _selectedLane >= _editLevelJson.lanes.Length || _selectedlaneUnit >= _editLevelJson.lanes[_selectedLane].laneUnits.Length)
             {
                 EditorGUILayout.HelpBox("No laneUnit selected.", MessageType.None);
                 return;
@@ -458,9 +619,7 @@ namespace Game.Level.EditorTools
             laneUnit.color = ((ColorId)EditorGUILayout.EnumPopup("Color", ParseColor(laneUnit.color))).ToString();
             EditorGUILayout.EndHorizontal();
 
-            laneUnit.ammo = EditorGUILayout.IntSlider("Ammo", laneUnit.ammo,
-                _config.MinAmmoPerLaneUnit, _config.MaxAmmoPerLaneUnit);
-
+            laneUnit.ammo = EditorGUILayout.IntSlider("Ammo", laneUnit.ammo, _config.MinAmmoPerLaneUnit, _config.MaxAmmoPerLaneUnit);
             laneUnits[_selectedlaneUnit] = laneUnit;
 
             EditorGUILayout.BeginHorizontal();
@@ -481,8 +640,6 @@ namespace Game.Level.EditorTools
             }
             EditorGUILayout.EndHorizontal();
         }
-
-        // ---------- Edit operations ----------
 
         private void AddlaneUnit(int laneIndex)
         {
@@ -544,9 +701,7 @@ namespace Game.Level.EditorTools
         private void RegenerateLanes()
         {
             var preset = _config.DifficultyPresets[Mathf.Clamp(_difficultyIndex, 0, _config.DifficultyPresets.Length - 1)];
-            int laneCount = _editLevelJson.lanes != null && _editLevelJson.lanes.Length > 0
-                ? _editLevelJson.lanes.Length
-                : Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
+            int laneCount = _editLevelJson.lanes != null && _editLevelJson.lanes.Length > 0 ? _editLevelJson.lanes.Length : Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
 
             int seedBase = (_editSourcePath ?? "regen").GetHashCode();
             LaneJson[] lanes = null;
@@ -579,7 +734,7 @@ namespace Game.Level.EditorTools
             string path = _editSourcePath;
             if (string.IsNullOrEmpty(path))
             {
-                path = EditorUtility.SaveFilePanel("Save Level JSON", _config.OutputFolder, "level", "json");
+                path = EditorUtility.SaveFilePanel("Save Level JSON", AssetPathToAbsolute(_levelJsonFolder), "level", "json");
                 if (string.IsNullOrEmpty(path)) return;
                 _editSourcePath = path;
             }
@@ -588,6 +743,7 @@ namespace Game.Level.EditorTools
             {
                 File.WriteAllText(path, LevelJsonConverter.ToJson(_editLevelJson, prettyPrint: true));
                 AssetDatabase.Refresh();
+                RefreshJsonAssetsFromFolder();
                 _editStatus = $"Saved to {path}";
             }
             catch (System.Exception e)
@@ -596,7 +752,139 @@ namespace Game.Level.EditorTools
             }
         }
 
-        // ---------- Helpers ----------
+        private int GetValidTextureCount()
+        {
+            int count = 0;
+            for (int i = 0; i < _textureEntries.Count; i++)
+                if (_textureEntries[i].Texture != null) count++;
+            return count;
+        }
+
+        private LevelTextureImportSettings GetStoredOrDefaultSettings(Texture2D texture, int suggestedLevelNumber)
+        {
+            if (texture != null)
+            {
+                string path = AssetDatabase.GetAssetPath(texture);
+                if (!string.IsNullOrEmpty(path) && _textureSettingsByPath.TryGetValue(path, out var settings))
+                {
+                    settings.DifficultyIndex = GetClampedDifficultyIndex(settings.DifficultyIndex < 0 ? _difficultyIndex : settings.DifficultyIndex);
+                    settings.LevelNumber = settings.LevelNumber <= 0 ? Mathf.Max(1, suggestedLevelNumber) : Mathf.Max(1, settings.LevelNumber);
+                    return settings;
+                }
+            }
+
+            var defaultSettings = LevelTextureImportSettings.FromConfig(_config);
+            defaultSettings.DifficultyIndex = GetClampedDifficultyIndex(_difficultyIndex);
+            defaultSettings.LevelNumber = Mathf.Max(1, suggestedLevelNumber);
+            return defaultSettings;
+        }
+
+        private int GetClampedDifficultyIndex(int difficultyIndex)
+        {
+            var presets = _config != null ? _config.DifficultyPresets : null;
+            if (presets == null || presets.Length == 0)
+                return 0;
+
+            return Mathf.Clamp(difficultyIndex, 0, presets.Length - 1);
+        }
+
+        private void StoreTextureSettings(Texture2D texture, LevelTextureImportSettings settings)
+        {
+            if (texture == null) return;
+            string path = AssetDatabase.GetAssetPath(texture);
+            if (string.IsNullOrEmpty(path)) return;
+            _textureSettingsByPath[path] = settings;
+        }
+
+        private void LoadTextureSettingsPrefs()
+        {
+            _textureSettingsByPath.Clear();
+            string raw = EditorPrefs.GetString(TextureSettingsKey, string.Empty);
+            if (string.IsNullOrEmpty(raw)) return;
+
+            var lines = raw.Split('\n');
+            for (int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+                if (string.IsNullOrEmpty(line)) continue;
+                var parts = line.Split('|');
+                if (parts.Length != 4 && parts.Length != 6) continue;
+                if (!int.TryParse(parts[1], out int maxGridSize)) continue;
+                if (!float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float alpha)) continue;
+                if (!float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float ratio)) continue;
+
+                int difficultyIndex = -1;
+                int levelNumber = 0;
+
+                if (parts.Length == 6)
+                {
+                    int.TryParse(parts[4], out difficultyIndex);
+                    int.TryParse(parts[5], out levelNumber);
+                }
+
+                _textureSettingsByPath[parts[0]] = new LevelTextureImportSettings(maxGridSize, alpha, ratio, difficultyIndex, levelNumber);
+            }
+        }
+
+        private void SaveTextureSettingsPrefs()
+        {
+            var sb = new StringBuilder();
+            foreach (var kv in _textureSettingsByPath)
+            {
+                sb.Append(kv.Key).Append('|');
+                sb.Append(kv.Value.MaxGridSize).Append('|');
+                sb.Append(kv.Value.AlphaThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|');
+                sb.Append(kv.Value.CellOpaqueRatio.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|');
+                sb.Append(kv.Value.DifficultyIndex).Append('|');
+                sb.Append(Mathf.Max(1, kv.Value.LevelNumber)).Append('\n');
+            }
+            EditorPrefs.SetString(TextureSettingsKey, sb.ToString());
+        }
+
+        private static IEnumerable<string> FindAssetPathsRecursive(string folder, string filter, params string[] extensions)
+        {
+            if (string.IsNullOrEmpty(folder)) yield break;
+
+            string assetFolder = folder.StartsWith("Assets") ? folder : AbsolutePathToAssetPath(folder);
+            if (!assetFolder.StartsWith("Assets")) yield break;
+
+            string[] guids = AssetDatabase.FindAssets(filter, new[] { assetFolder });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (!HasExtension(path, extensions)) continue;
+                yield return path;
+            }
+        }
+
+        private static bool HasExtension(string path, string[] extensions)
+        {
+            if (extensions == null || extensions.Length == 0) return true;
+            string ext = Path.GetExtension(path).ToLowerInvariant();
+            for (int i = 0; i < extensions.Length; i++)
+            {
+                if (ext == extensions[i]) return true;
+            }
+            return false;
+        }
+
+        private static string AssetPathToAbsolute(string path)
+        {
+            if (string.IsNullOrEmpty(path)) return Application.dataPath;
+            if (Path.IsPathRooted(path)) return path;
+            if (path == "Assets") return Application.dataPath;
+            if (path.StartsWith("Assets/")) return Path.Combine(Application.dataPath, path.Substring("Assets/".Length));
+            return path;
+        }
+
+        private static string AbsolutePathToAssetPath(string absolutePath)
+        {
+            absolutePath = absolutePath.Replace('\\', '/');
+            string dataPath = Application.dataPath.Replace('\\', '/');
+            if (absolutePath == dataPath) return "Assets";
+            if (absolutePath.StartsWith(dataPath + "/")) return "Assets/" + absolutePath.Substring(dataPath.Length + 1);
+            return absolutePath;
+        }
 
         private static ColorId ParseColor(string value)
         {
@@ -608,17 +896,6 @@ namespace Game.Level.EditorTools
             var result = new ColorId[pixels?.Length ?? 0];
             for (int i = 0; i < result.Length; i++) result[i] = ParseColor(pixels[i]);
             return result;
-        }
-
-        private static Texture2D ResolveTexture(Object obj)
-        {
-            if (obj == null) return null;
-            if (obj is Texture2D t) return t;
-            if (obj is Sprite s) return s.texture;
-            var path = AssetDatabase.GetAssetPath(obj);
-            if (!string.IsNullOrEmpty(path))
-                return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            return null;
         }
     }
 }

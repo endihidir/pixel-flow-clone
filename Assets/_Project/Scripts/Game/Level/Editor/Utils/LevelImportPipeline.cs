@@ -21,6 +21,12 @@ namespace Game.Level.EditorTools
         public static ImportResult Import(Texture2D pngAsset, int laneCount, int difficultyIndex, LevelEditorConfigSO config, string outputFileName, int levelNumber)
         {
             if (config == null) return new ImportResult { Success = false, Error = "Config is null." };
+            return Import(pngAsset, laneCount, difficultyIndex, config, LevelTextureImportSettings.FromConfig(config), outputFileName, levelNumber);
+        }
+
+        public static ImportResult Import(Texture2D pngAsset, int laneCount, int difficultyIndex, LevelEditorConfigSO config, LevelTextureImportSettings importSettings, string outputFileName, int levelNumber)
+        {
+            if (config == null) return new ImportResult { Success = false, Error = "Config is null." };
             if (config.Palette == null) return new ImportResult { Success = false, Error = "Palette missing on config." };
             if (config.DifficultyPresets == null || config.DifficultyPresets.Length == 0) return new ImportResult { Success = false, Error = "No difficulty presets configured." };
             if (difficultyIndex < 0 || difficultyIndex >= config.DifficultyPresets.Length) return new ImportResult { Success = false, Error = "Difficulty index out of range." };
@@ -28,7 +34,7 @@ namespace Game.Level.EditorTools
             int clampedLanes = Mathf.Clamp(laneCount, LaneMin, LaneMax);
             var preset = config.DifficultyPresets[difficultyIndex];
 
-            var parsed = PngLevelParser.Parse(pngAsset, config);
+            var parsed = PngLevelParser.Parse(pngAsset, config, importSettings);
             if (parsed.Cubes.Length == 0) return new ImportResult { Success = false, Error = "PNG has no opaque pixels." };
 
             var pixels = ToPixelJson(parsed.Cubes);
