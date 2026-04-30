@@ -8,7 +8,6 @@ namespace Game.Level.Services
         bool IsInitialized { get; }
         bool UseTestLevel { get; }
         int TestLevelIndex { get; }
-        int GetUnitSlotSize();
         void Initialize();
         LevelDefinition GetLevelDefinition(int index);
     }

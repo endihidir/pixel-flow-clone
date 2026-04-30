@@ -9,7 +9,7 @@ namespace Game.Level.EditorTools
 {
     public sealed class LevelEditorWindow : EditorWindow
     {
-        private const int LaneMin = 3;
+        private const int LaneMin = 2;
         private const int LaneMax = 5;
         private const string EditorConfigPathKey = "PixelFlow.LevelEditor.ConfigPath";
         private const string SourceTextureFolderKey = "PixelFlow.LevelEditor.SourceTextureFolder";
@@ -34,14 +34,12 @@ namespace Game.Level.EditorTools
 
         private string _sourceTextureFolder = "Assets";
         private string _levelJsonFolder = "Assets";
-        private int _laneCount = 3;
-        private int _difficultyIndex = 1;
         private string _fileNamePrefix = "level";
         private int _startLevelNumber = 1;
         private Vector2 _genScroll;
         private Vector2 _loadScroll;
         private string _lastReport;
-        private bool _laneCountInitialized;
+        private bool _defaultsInitialized;
 
         private TextAsset _loadJson;
 
@@ -78,7 +76,7 @@ namespace Game.Level.EditorTools
             DrawConfigField();
             if (_config == null) return;
 
-            EnsureLaneInit();
+            EnsureDefaultsInit();
             DrawTabs();
 
             EditorGUILayout.Space();
@@ -98,20 +96,19 @@ namespace Game.Level.EditorTools
             {
                 string path = _config != null ? AssetDatabase.GetAssetPath(_config) : string.Empty;
                 EditorPrefs.SetString(EditorConfigPathKey, path);
-                _laneCountInitialized = false;
+                _defaultsInitialized = false;
             }
 
             if (_config == null)
                 EditorGUILayout.HelpBox("Assign a LevelEditorConfigSO to begin.", MessageType.Info);
         }
 
-        private void EnsureLaneInit()
+        private void EnsureDefaultsInit()
         {
-            if (_laneCountInitialized) return;
-            _laneCount = Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
+            if (_defaultsInitialized) return;
             if (_levelJsonFolder == "Assets" && !string.IsNullOrEmpty(_config.OutputFolder))
                 _levelJsonFolder = _config.OutputFolder;
-            _laneCountInitialized = true;
+            _defaultsInitialized = true;
         }
 
         private void DrawTabs()
@@ -124,26 +121,13 @@ namespace Game.Level.EditorTools
 
         private void DrawGenerateTab()
         {
-            EditorGUILayout.LabelField("Generation Settings", EditorStyles.boldLabel);
-            _laneCount = EditorGUILayout.IntSlider("Lane Count", _laneCount, LaneMin, LaneMax);
-
-            var presets = _config.DifficultyPresets;
-            if (presets != null && presets.Length > 0)
-            {
-                var names = new string[presets.Length];
-                for (int i = 0; i < presets.Length; i++)
-                    names[i] = string.IsNullOrEmpty(presets[i].Name) ? $"Preset {i}" : presets[i].Name;
-                _difficultyIndex = EditorGUILayout.Popup("Default Difficulty", Mathf.Clamp(_difficultyIndex, 0, presets.Length - 1), names);
-            }
-            else
-            {
-                EditorGUILayout.HelpBox("No DifficultyPresets configured.", MessageType.Warning);
-            }
-
-            EditorGUILayout.Space();
             EditorGUILayout.LabelField("Output", EditorStyles.boldLabel);
             _fileNamePrefix = EditorGUILayout.TextField("File Prefix", _fileNamePrefix);
             _startLevelNumber = EditorGUILayout.IntField("Default Start Level Number", _startLevelNumber);
+
+            var presets = _config.DifficultyPresets;
+            if (presets == null || presets.Length == 0)
+                EditorGUILayout.HelpBox("No DifficultyPresets configured.", MessageType.Warning);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Source Textures", EditorStyles.boldLabel);
@@ -221,6 +205,8 @@ namespace Game.Level.EditorTools
                 settings.DifficultyIndex = EditorGUILayout.Popup("Difficulty", Mathf.Clamp(settings.DifficultyIndex, 0, presets.Length - 1), names);
             }
 
+            int laneCount = settings.LaneCount <= 0 ? _config.DefaultLaneCount : settings.LaneCount;
+            settings.LaneCount = EditorGUILayout.IntSlider("Lane Count", Mathf.Clamp(laneCount, LaneMin, LaneMax), LaneMin, LaneMax);
             settings.MaxGridSize = EditorGUILayout.IntField("Max Grid Size", settings.MaxGridSize);
             settings.AlphaThreshold = EditorGUILayout.Slider("Alpha Threshold", settings.AlphaThreshold, 0f, 1f);
             settings.CellOpaqueRatio = EditorGUILayout.Slider("Cell Opaque Ratio", settings.CellOpaqueRatio, 0f, 1f);
@@ -355,11 +341,12 @@ namespace Game.Level.EditorTools
 
                 int levelNumber = Mathf.Max(1, entry.Settings.LevelNumber);
                 int difficultyIndex = GetClampedDifficultyIndex(entry.Settings.DifficultyIndex);
+                int laneCount = Mathf.Clamp(entry.Settings.LaneCount, LaneMin, LaneMax);
                 string outName = $"{_fileNamePrefix}_{levelNumber}";
-                var result = LevelImportPipeline.Import(png, _laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
+                var result = LevelImportPipeline.Import(png, laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
 
                 if (result.Success)
-                    sb.AppendLine($"OK  {png.name} -> {outName}.json (level {levelNumber}, difficulty: {difficultyIndex}, attempts: {result.Attempts})");
+                    sb.AppendLine($"OK  {png.name} -> {outName}.json (level {levelNumber}, lanes: {laneCount}, difficulty: {difficultyIndex}, attempts: {result.Attempts})");
                 else
                     sb.AppendLine($"FAIL  {png.name}: {result.Error}");
             }
@@ -386,8 +373,9 @@ namespace Game.Level.EditorTools
             var png = entry.Texture;
             int levelNumber = Mathf.Max(1, entry.Settings.LevelNumber);
             int difficultyIndex = GetClampedDifficultyIndex(entry.Settings.DifficultyIndex);
+            int laneCount = Mathf.Clamp(entry.Settings.LaneCount, LaneMin, LaneMax);
             string outName = $"{_fileNamePrefix}_{levelNumber}";
-            var result = LevelImportPipeline.Import(png, _laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
+            var result = LevelImportPipeline.Import(png, laneCount, difficultyIndex, _config, entry.Settings, outName, levelNumber);
             if (!result.Success)
             {
                 _lastReport = $"FAIL  {png.name}: {result.Error}";
@@ -468,7 +456,18 @@ namespace Game.Level.EditorTools
             EditorGUILayout.EndHorizontal();
 
             if (!string.IsNullOrEmpty(_editStatus))
+            {
+                Color previousColor = GUI.color;
+
+                if (_editStatus.StartsWith("Solvable"))
+                    GUI.color = Color.green;
+                else if (_editStatus.StartsWith("Not solvable"))
+                    GUI.color = Color.red;
+
                 EditorGUILayout.HelpBox(_editStatus, MessageType.None);
+
+                GUI.color = previousColor;
+            }
 
             _editScroll = EditorGUILayout.BeginScrollView(_editScroll);
 
@@ -510,7 +509,9 @@ namespace Game.Level.EditorTools
                     int flat = y * w + x;
                     var id = ParseColor(_editLevelJson.pixels[flat]);
                     var cellRect = new Rect(rect.x + x * cell, rect.y + y * cell, cell - 1, cell - 1);
-                    var color = id == ColorId.None ? new Color(0.18f, 0.10f, 0.25f) : (palette != null ? palette.GetColor(id) : Color.magenta);
+                    var color = id == ColorId.None
+                        ? new Color(0.18f, 0.10f, 0.25f)
+                        : (palette != null ? palette.GetColor(id) : Color.magenta);
                     EditorGUI.DrawRect(cellRect, color);
 
                     if (e.type == EventType.MouseDown && cellRect.Contains(e.mousePosition))
@@ -605,7 +606,9 @@ namespace Game.Level.EditorTools
         private void DrawlaneUnitDetailPanel()
         {
             EditorGUILayout.LabelField("Selected laneUnit", EditorStyles.boldLabel);
-            if (_selectedLane < 0 || _selectedlaneUnit < 0 || _selectedLane >= _editLevelJson.lanes.Length || _selectedlaneUnit >= _editLevelJson.lanes[_selectedLane].laneUnits.Length)
+            if (_selectedLane < 0 || _selectedlaneUnit < 0
+                || _selectedLane >= _editLevelJson.lanes.Length
+                || _selectedlaneUnit >= _editLevelJson.lanes[_selectedLane].laneUnits.Length)
             {
                 EditorGUILayout.HelpBox("No laneUnit selected.", MessageType.None);
                 return;
@@ -619,7 +622,9 @@ namespace Game.Level.EditorTools
             laneUnit.color = ((ColorId)EditorGUILayout.EnumPopup("Color", ParseColor(laneUnit.color))).ToString();
             EditorGUILayout.EndHorizontal();
 
-            laneUnit.ammo = EditorGUILayout.IntSlider("Ammo", laneUnit.ammo, _config.MinAmmoPerLaneUnit, _config.MaxAmmoPerLaneUnit);
+            laneUnit.ammo = EditorGUILayout.IntSlider("Ammo", laneUnit.ammo,
+                _config.MinAmmoPerLaneUnit, _config.MaxAmmoPerLaneUnit);
+
             laneUnits[_selectedlaneUnit] = laneUnit;
 
             EditorGUILayout.BeginHorizontal();
@@ -694,14 +699,26 @@ namespace Game.Level.EditorTools
 
         private void RunValidate()
         {
-            bool ok = GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, _editLevelJson.lanes, _config.LevelDataServiceConfig.UnitSlotSize);
-            _editStatus = ok ? "Validate: SOLVABLE" : "Validate: NOT SOLVABLE";
+            if (GreedyLevelValidator.IsSolvable(_editLevelJson.pixels, _editLevelJson.lanes, _config.LevelDataServiceConfig.UnitSlotSize, out string reason))
+            {
+                _editStatus = "Solvable";
+            }
+            else
+            {
+                _editStatus = string.IsNullOrEmpty(reason)
+                    ? "Not solvable"
+                    : "Not solvable\n" + reason;
+            }
         }
 
         private void RegenerateLanes()
         {
-            var preset = _config.DifficultyPresets[Mathf.Clamp(_difficultyIndex, 0, _config.DifficultyPresets.Length - 1)];
-            int laneCount = _editLevelJson.lanes != null && _editLevelJson.lanes.Length > 0 ? _editLevelJson.lanes.Length : Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
+            int laneCount = _editLevelJson.lanes != null && _editLevelJson.lanes.Length > 0
+                ? _editLevelJson.lanes.Length
+                : Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
+
+            int difficultyIndex = GetClampedDifficultyIndex(0);
+            var preset = _config.DifficultyPresets[difficultyIndex];
 
             int seedBase = (_editSourcePath ?? "regen").GetHashCode();
             LaneJson[] lanes = null;
@@ -767,15 +784,17 @@ namespace Game.Level.EditorTools
                 string path = AssetDatabase.GetAssetPath(texture);
                 if (!string.IsNullOrEmpty(path) && _textureSettingsByPath.TryGetValue(path, out var settings))
                 {
-                    settings.DifficultyIndex = GetClampedDifficultyIndex(settings.DifficultyIndex < 0 ? _difficultyIndex : settings.DifficultyIndex);
+                    settings.DifficultyIndex = GetClampedDifficultyIndex(settings.DifficultyIndex < 0 ? 0 : settings.DifficultyIndex);
                     settings.LevelNumber = settings.LevelNumber <= 0 ? Mathf.Max(1, suggestedLevelNumber) : Mathf.Max(1, settings.LevelNumber);
+                    settings.LaneCount = Mathf.Clamp(settings.LaneCount <= 0 ? _config.DefaultLaneCount : settings.LaneCount, LaneMin, LaneMax);
                     return settings;
                 }
             }
 
             var defaultSettings = LevelTextureImportSettings.FromConfig(_config);
-            defaultSettings.DifficultyIndex = GetClampedDifficultyIndex(_difficultyIndex);
+            defaultSettings.DifficultyIndex = GetClampedDifficultyIndex(0);
             defaultSettings.LevelNumber = Mathf.Max(1, suggestedLevelNumber);
+            defaultSettings.LaneCount = Mathf.Clamp(_config.DefaultLaneCount, LaneMin, LaneMax);
             return defaultSettings;
         }
 
@@ -808,21 +827,25 @@ namespace Game.Level.EditorTools
                 var line = lines[i];
                 if (string.IsNullOrEmpty(line)) continue;
                 var parts = line.Split('|');
-                if (parts.Length != 4 && parts.Length != 6) continue;
+                if (parts.Length != 4 && parts.Length != 6 && parts.Length != 7) continue;
                 if (!int.TryParse(parts[1], out int maxGridSize)) continue;
                 if (!float.TryParse(parts[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float alpha)) continue;
                 if (!float.TryParse(parts[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float ratio)) continue;
 
                 int difficultyIndex = -1;
                 int levelNumber = 0;
+                int laneCount = 0;
 
-                if (parts.Length == 6)
+                if (parts.Length >= 6)
                 {
                     int.TryParse(parts[4], out difficultyIndex);
                     int.TryParse(parts[5], out levelNumber);
                 }
 
-                _textureSettingsByPath[parts[0]] = new LevelTextureImportSettings(maxGridSize, alpha, ratio, difficultyIndex, levelNumber);
+                if (parts.Length == 7)
+                    int.TryParse(parts[6], out laneCount);
+
+                _textureSettingsByPath[parts[0]] = new LevelTextureImportSettings(maxGridSize, alpha, ratio, difficultyIndex, levelNumber, laneCount);
             }
         }
 
@@ -836,7 +859,8 @@ namespace Game.Level.EditorTools
                 sb.Append(kv.Value.AlphaThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|');
                 sb.Append(kv.Value.CellOpaqueRatio.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append('|');
                 sb.Append(kv.Value.DifficultyIndex).Append('|');
-                sb.Append(Mathf.Max(1, kv.Value.LevelNumber)).Append('\n');
+                sb.Append(Mathf.Max(1, kv.Value.LevelNumber)).Append('|');
+                sb.Append(Mathf.Clamp(kv.Value.LaneCount <= 0 ? LaneMin : kv.Value.LaneCount, LaneMin, LaneMax)).Append('\n');
             }
             EditorPrefs.SetString(TextureSettingsKey, sb.ToString());
         }

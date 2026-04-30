@@ -18,7 +18,6 @@ namespace Game.Level.Services
             _progressionModel = progressionModel;
         }
         
-        public int GetUnitSlotSize() => _levelDataService.GetUnitSlotSize();
         public int GetGridWidth() => _levelDataService.GetLevelDefinition(CurrentLevelIndex).Width;
         public int GetGridHeight() => _levelDataService.GetLevelDefinition(CurrentLevelIndex).Height;
         public Vector2Int GetGridSize() => _levelDataService.GetLevelDefinition(CurrentLevelIndex).GridSize;

@@ -6,7 +6,7 @@ namespace Game.Level.EditorTools
 {
     public static class LevelImportPipeline
     {
-        private const int LaneMin = 3;
+        private const int LaneMin = 2;
         private const int LaneMax = 5;
 
         public struct ImportResult

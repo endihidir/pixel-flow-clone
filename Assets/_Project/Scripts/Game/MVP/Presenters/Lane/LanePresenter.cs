@@ -46,7 +46,7 @@ namespace Game.Presenters
             if (!_view.TryGetLaneIndexAtScreenPoint(screenPoint, _camera, out int laneIndex)) return;
 
             var front = _model.GetFrontUnit(laneIndex);
-            if (front == null) return;
+            if (!front) return;
 
             OnFrontUnitTapped?.Invoke(front);
         }

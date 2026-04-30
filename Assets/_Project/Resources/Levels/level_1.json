@@ -369,59 +369,75 @@
             "laneUnits": [
                 {
                     "color": "Red",
-                    "ammo": 36
+                    "ammo": 19
                 },
                 {
                     "color": "Red",
-                    "ammo": 21
+                    "ammo": 7
+                },
+                {
+                    "color": "Red",
+                    "ammo": 12
+                },
+                {
+                    "color": "Red",
+                    "ammo": 13
+                },
+                {
+                    "color": "Red",
+                    "ammo": 22
+                },
+                {
+                    "color": "Red",
+                    "ammo": 17
+                },
+                {
+                    "color": "Red",
+                    "ammo": 8
+                },
+                {
+                    "color": "Red",
+                    "ammo": 19
+                },
+                {
+                    "color": "Red",
+                    "ammo": 10
+                }
+            ]
+        },
+        {
+            "laneUnits": [
+                {
+                    "color": "Red",
+                    "ammo": 10
                 },
                 {
                     "color": "Red",
                     "ammo": 16
                 },
                 {
+                    "color": "Red",
+                    "ammo": 15
+                },
+                {
+                    "color": "Red",
+                    "ammo": 17
+                },
+                {
+                    "color": "Red",
+                    "ammo": 12
+                },
+                {
+                    "color": "Red",
+                    "ammo": 18
+                },
+                {
+                    "color": "Red",
+                    "ammo": 13
+                },
+                {
                     "color": "Pink",
                     "ammo": 6
-                }
-            ]
-        },
-        {
-            "laneUnits": [
-                {
-                    "color": "Red",
-                    "ammo": 27
-                },
-                {
-                    "color": "Red",
-                    "ammo": 3
-                },
-                {
-                    "color": "Red",
-                    "ammo": 28
-                },
-                {
-                    "color": "Red",
-                    "ammo": 13
-                }
-            ]
-        },
-        {
-            "laneUnits": [
-                {
-                    "color": "Red",
-                    "ammo": 24
-                },
-                {
-                    "color": "Red",
-                    "ammo": 13
-                },
-                {
-                    "color": "Red",
-                    "ammo": 20
-                },
-                {
-                    "color": "Red",
-                    "ammo": 27
                 }
             ]
         }

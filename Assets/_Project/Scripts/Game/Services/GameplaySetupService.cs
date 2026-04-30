@@ -15,10 +15,11 @@ namespace Game.Services
         private readonly ILaneModel _laneModel;
         private readonly ILaneView _laneView;
         private readonly IUnitSlotModel _unitSlotModel;
+        private readonly IUnitSlotView _unitSlotView;
 
         public GameplaySetupService(ILevelDefinitionProvider levelDefinitionProvider, IPixelCellFactoryHandler pixelCellFactoryHandler,
-            ILaneUnitFactoryHandler laneUnitFactoryHandler, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView, ILaneModel laneModel,
-            ILaneView laneView, IUnitSlotModel unitSlotModel)
+            ILaneUnitFactoryHandler laneUnitFactoryHandler, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView,
+            ILaneModel laneModel, ILaneView laneView, IUnitSlotModel unitSlotModel, IUnitSlotView unitSlotView)
         {
             _levelDefinitionProvider = levelDefinitionProvider;
             _pixelCellFactoryHandler = pixelCellFactoryHandler;
@@ -28,13 +29,14 @@ namespace Game.Services
             _laneModel = laneModel;
             _laneView = laneView;
             _unitSlotModel = unitSlotModel;
+            _unitSlotView = unitSlotView;
         }
 
         public void SetupGameplay()
         {
             SetupPixelGrid();
             SetupLanes();
-            _unitSlotModel.Initialize(_levelDefinitionProvider.GetUnitSlotSize());
+            SetupUnitSlots();
         }
 
         private void SetupPixelGrid()
@@ -53,6 +55,12 @@ namespace Game.Services
             _laneUnitFactoryHandler.PopulateLaneUnits(lanes, out var laneUnits);
             _laneModel.Initialize(lanes, laneUnits);
             _laneView.Initialize(lanes.Length);
+        }
+
+        private void SetupUnitSlots()
+        {
+            var slotCount = _unitSlotView.SlotCount;
+            _unitSlotModel.Initialize(slotCount);
         }
 
         public void ResetGameplay() { }

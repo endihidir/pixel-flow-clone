@@ -16,10 +16,12 @@ namespace Game.Bootstrappers
         [field: SerializeField] private Camera GameplayCamera { get; set; }
         [field: SerializeField] private PixelGridView PixelGridView { get; set; }
         [field: SerializeField] private LaneView LaneView { get; set; }
+        [field: SerializeField] private UnitSlotView UnitSlotView { get; set; }
 
         private GameplaySetupService _gameplaySetupService;
         private PixelGridPresenter _pixelGridPresenter;
         private LanePresenter _lanePresenter;
+        private UnitSlotPresenter _unitSlotPresenter;
         private IInputService _inputService;
 
         public void Initialize(IObjectPoolService poolService, ILevelDefinitionProvider levelDefinitionProvider, GameplayConfigContainerSO gameplayConfig)
@@ -37,11 +39,12 @@ namespace Game.Bootstrappers
 
             _pixelGridPresenter = new PixelGridPresenter(pixelGridModel, PixelGridView);
             _lanePresenter = new LanePresenter(laneModel, LaneView, _inputService, GameplayCamera);
+            _unitSlotPresenter = new UnitSlotPresenter(unitSlotModel, UnitSlotView, _inputService, GameplayCamera);
 
             _gameplaySetupService = new GameplaySetupService(levelDefinitionProvider, pixelCellFactoryHandler, laneUnitFactoryHandler,
                                                                 pixelGridModel, PixelGridView,
                                                                 laneModel, LaneView,
-                                                                unitSlotModel);
+                                                                unitSlotModel, UnitSlotView);
 
             _gameplaySetupService.SetupGameplay();
 
@@ -54,6 +57,7 @@ namespace Game.Bootstrappers
         {
             _pixelGridPresenter?.Dispose();
             _lanePresenter?.Dispose();
+            _unitSlotPresenter?.Dispose();
         }
     }
 }

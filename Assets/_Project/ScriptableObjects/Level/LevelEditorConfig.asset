@@ -21,7 +21,7 @@ MonoBehaviour:
     type: 2}
   <MaxAmmoPerLaneUnit>k__BackingField: 40
   <MinAmmoPerLaneUnit>k__BackingField: 3
-  <DefaultLaneCount>k__BackingField: 3
+  <DefaultLaneCount>k__BackingField: 2
   <DifficultyPresets>k__BackingField:
   - Name: Easy
     AvgAmmo: 30
