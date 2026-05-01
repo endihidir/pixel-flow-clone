@@ -14,14 +14,7 @@ namespace Game.Handlers
     public sealed class LaneUnitShootHandler : ILaneUnitShootHandler
     {
         private const int MaxActiveOrbiters = 5;
-        
-        private const float LaunchMoveDuration = 0.4f;
-        private const float LaunchJumpPower = 10f;
-        private const float OrbitSpeed = 15f;
-        private const float BallSpeed = 50f;
-        private const float MinBallDuration = 0.05f;
-        private const float MaxBallDuration = 0.2f;
-        
+
         private readonly ILaneModel _laneModel;
         private readonly IUnitSlotModel _unitSlotModel;
         private readonly IPixelGridModel _pixelGridModel;
@@ -35,8 +28,7 @@ namespace Game.Handlers
         private LaneUnitOrbitPath _orbitPath;
         private bool _isInitialized, _isDisposing;
 
-        public LaneUnitShootHandler(ILaneModel laneModel, IUnitSlotModel unitSlotModel, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView, 
-            IProjectileFactory projectileFactory, ILaneUnitFactory laneUnitFactory, IPixelCellFactory pixelCellFactory)
+        public LaneUnitShootHandler(ILaneModel laneModel, IUnitSlotModel unitSlotModel, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView, IProjectileFactory projectileFactory, ILaneUnitFactory laneUnitFactory, IPixelCellFactory pixelCellFactory)
         {
             _laneModel = laneModel;
             _unitSlotModel = unitSlotModel;
@@ -45,7 +37,7 @@ namespace Game.Handlers
             _projectileFactory = projectileFactory;
             _laneUnitFactory = laneUnitFactory;
             _pixelCellFactory = pixelCellFactory;
-            
+
             _pixelGridView.OnViewInitialized += OnPixelGridReady;
         }
 
@@ -96,7 +88,7 @@ namespace Game.Handlers
             int startIdx = _orbitPath.LaunchNodeIndex;
             var launchPos = _orbitPath.Nodes[startIdx].Position;
 
-            await unit.MotionAnimation.JumpTo(launchPos, LaunchJumpPower, LaunchMoveDuration);
+            await unit.MotionAnimation.JumpToLaunchPosition(launchPos);
 
             bool aimLocked = ShouldStartWithInwardAim(unit);
 
@@ -104,7 +96,7 @@ namespace Game.Handlers
             if (aimLocked) unit.OrbitAnimation.SetAimImmediate();
             else unit.OrbitAnimation.ResetAimImmediate();
 
-            await OrbitRunner.Run(unit, _orbitPath, startIdx, OrbitSpeed, aimLocked, HandleTriggerAtNode);
+            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.OrbitAnimation.OrbitSpeed, aimLocked, HandleTriggerAtNode);
 
             HandleOrbitCompleted(unit);
         }
@@ -120,7 +112,7 @@ namespace Game.Handlers
             }
 
             var pixel = _pixelGridModel.GetGridObject(coord);
-            
+
             if (!pixel)
             {
                 if (!aimLocked) unit.OrbitAnimation.ResetAimImmediate();
@@ -133,7 +125,7 @@ namespace Game.Handlers
             if (!aimLocked) await unit.OrbitAnimation.AimAtPixel();
 
             FireAsync(unit, pixel).Forget();
-            
+
             if (unit.Ammo <= 0)
                 ReleaseUnit(unit).Forget();
 
@@ -152,11 +144,10 @@ namespace Game.Handlers
             var ball = _projectileFactory.GetProjectile<BallProjectileObject>();
             var spawnPos = unit.ProjectileSpawnPoint.position;
             var targetPos = pixel.transform.position;
-            float duration = Mathf.Clamp(Vector3.Distance(spawnPos, targetPos) / BallSpeed, MinBallDuration, MaxBallDuration);
 
             ball.transform.position = spawnPos;
 
-            await ball.MoveAnimation.MoveTo(targetPos, duration);
+            await ball.MoveAnimation.MoveToTarget(spawnPos, targetPos);
 
             if (!_isDisposing && ball)
                 _projectileFactory.ReleaseProjectile(ball);

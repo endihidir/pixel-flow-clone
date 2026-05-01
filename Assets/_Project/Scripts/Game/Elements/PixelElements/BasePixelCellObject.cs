@@ -55,6 +55,7 @@ namespace Game.Grid.Item
 
         public void ResetItem()
         {
+            CellAnimation?.Dispose();
             ColorId = ColorId.None;
             Coord = new Vector2Int(-1, -1);
             SetPosition(Vector3.zero);

@@ -7,6 +7,8 @@ namespace Game.Modules
     public sealed class LaneUnitMotionAnimationModule : MonoBehaviour
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
+        [field: SerializeField] public float LaunchMoveDuration { get; private set; } = 0.4f;
+        [field: SerializeField] public float LaunchJumpPower { get; private set; } = 10f;
         [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.2f;
 
         private Tween _moveTween;
@@ -18,7 +20,7 @@ namespace Game.Modules
             _moveTween = Transform.DOMove(worldPos, duration).SetEase(ease);
             return _moveTween;
         }
-        
+
         public Tween MoveLocalTo(Vector3 localPos, float duration, float delay = 0f, Ease ease = Ease.OutQuad)
         {
             _moveTween?.Kill();
@@ -26,10 +28,10 @@ namespace Game.Modules
             return _moveTween;
         }
 
-        public Tween JumpTo(Vector3 worldPos, float jumpPower, float duration)
+        public Tween JumpToLaunchPosition(Vector3 worldPos)
         {
             _moveTween?.Kill();
-            _moveTween = Transform.DOJump(worldPos, jumpPower, 1, duration).SetEase(Ease.Linear);
+            _moveTween = Transform.DOJump(worldPos, LaunchJumpPower, 1, LaunchMoveDuration).SetEase(Ease.Linear);
             return _moveTween;
         }
 
@@ -48,6 +50,10 @@ namespace Game.Modules
             _scaleTween?.Kill();
         }
 
-        private void OnDestroy() => Dispose();
+        private void OnDestroy()
+        {
+            _moveTween = null;
+            _scaleTween = null;
+        }
     }
 }

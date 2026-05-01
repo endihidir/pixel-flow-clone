@@ -8,6 +8,7 @@ namespace Game.Modules
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
         [field: SerializeField, Required] public Transform UnitHolder { get; private set; }
+        [field: SerializeField] public float OrbitSpeed { get; private set; } = 15f;
         [field: SerializeField] public float AimLocalYaw { get; private set; } = -90f;
         [field: SerializeField] public float AimRotateDuration { get; private set; } = 0.02f;
 
@@ -38,8 +39,7 @@ namespace Game.Modules
         public Tween AimAtPixel()
         {
             _aimTween?.Kill();
-            _aimTween = UnitHolder.DOLocalRotateQuaternion(Quaternion.Euler(0f, AimLocalYaw, 0f), AimRotateDuration)
-                .SetEase(Ease.OutSine);
+            _aimTween = UnitHolder.DOLocalRotateQuaternion(Quaternion.Euler(0f, AimLocalYaw, 0f), AimRotateDuration).SetEase(Ease.OutSine);
             return _aimTween;
         }
 
@@ -60,7 +60,7 @@ namespace Game.Modules
             _moveTween?.Kill();
             _rotateTween?.Kill();
             _aimTween?.Kill();
-            
+
             Transform.rotation = Quaternion.identity;
             UnitHolder.localRotation = Quaternion.identity;
         }

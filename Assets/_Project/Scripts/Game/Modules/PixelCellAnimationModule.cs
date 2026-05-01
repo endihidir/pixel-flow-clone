@@ -1,4 +1,3 @@
-using System;
 using DG.Tweening;
 using NaughtyAttributes;
 using UnityEngine;
@@ -29,6 +28,9 @@ namespace Game.Modules
         }
 
         public void Dispose() => _sequence?.Kill();
-        private void OnDestroy() => Dispose();
+        private void OnDestroy()
+        {
+            _sequence = null;
+        }
     }
 }
