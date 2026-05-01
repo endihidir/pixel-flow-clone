@@ -7,7 +7,7 @@ namespace Game.Modules
     public sealed class LaneUnitMotionAnimationModule : MonoBehaviour
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
-        [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.2f;
+        [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.35f;
 
         private Tween _moveTween;
         private Tween _scaleTween;

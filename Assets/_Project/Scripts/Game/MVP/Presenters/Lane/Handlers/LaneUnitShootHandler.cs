@@ -138,18 +138,14 @@ namespace Game.Handlers
             _pixelGridModel.SetGridObject(coord, null);
             unit.ConsumeAmmo(1);
 
-            if (!aimLocked)
-            {
-                aimLocked = true;
-                await unit.OrbitAnimation.AimAtPixel();
-            }
+            if (!aimLocked) await unit.OrbitAnimation.AimAtPixel();
 
             FireAsync(unit, pixel).Forget();
-
+            
             if (unit.Ammo <= 0)
                 ReleaseUnit(unit).Forget();
 
-            return aimLocked;
+            return true;
         }
 
         private void HandleOrbitCompleted(BaseLaneUnitObject unit)
@@ -176,8 +172,8 @@ namespace Game.Handlers
         {
             _activeOrbiters.Remove(unit);
             await unit.MotionAnimation.ScaleDown();
-            unit.MotionAnimation.ResetScale();
             _laneUnitFactory.ReleaseLaneUnit(unit);
+            unit.MotionAnimation.ResetScale();
         }
 
         private bool ShouldStartWithInwardAim(BaseLaneUnitObject unit)

@@ -215,6 +215,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Transform>k__BackingField: {fileID: 8368027734857410717}
+  <ScaleDownDuration>k__BackingField: 0.2
 --- !u!114 &385616583353209432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,6 +230,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Transform>k__BackingField: {fileID: 8368027734857410717}
   <UnitHolder>k__BackingField: {fileID: 2745698214585574325}
+  <AimLocalYaw>k__BackingField: -90
+  <AimRotateDuration>k__BackingField: 0.02
 --- !u!1 &8962120919185949376
 GameObject:
   m_ObjectHideFlags: 0

@@ -17,7 +17,8 @@ namespace Game.Utils
             if (path.Nodes[currentIdx].IsTriggerNode && onTriggerNode != null)
             {
                 aimLocked = await onTriggerNode(unit, currentIdx, aimLocked);
-                if (!unit.gameObject.activeSelf) return;
+
+                if (ShouldStop()) return;
             }
 
             while (currentIdx != endIdx)
@@ -34,15 +35,23 @@ namespace Game.Utils
 
                 await unit.OrbitAnimation.MoveSegment(toNode.Position, duration);
 
-                if (!unit.gameObject.activeSelf) return;
+                if (ShouldStop()) return;
 
                 currentIdx = toIdx;
 
                 if (path.Nodes[currentIdx].IsTriggerNode && onTriggerNode != null)
                 {
                     aimLocked = await onTriggerNode(unit, currentIdx, aimLocked);
-                    if (!unit.gameObject.activeSelf) return;
+
+                    if (ShouldStop()) return;
                 }
+            }
+
+            return;
+
+            bool ShouldStop()
+            {
+                return unit.Ammo <= 0 || !unit.gameObject.activeSelf;
             }
         }
 
