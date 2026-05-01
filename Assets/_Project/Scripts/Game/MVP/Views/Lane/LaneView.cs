@@ -1,4 +1,5 @@
 using System;
+using Game.Lane.Configs;
 using Game.Lane.Item;
 using UnityEngine;
 
@@ -9,9 +10,7 @@ namespace Game.Views
         [field: SerializeField] public Transform Root { get; private set; }
         [field: SerializeField] public Transform LeftPoint { get; private set; }
         [field: SerializeField] public Transform RightPoint { get; private set; }
-        [field: SerializeField] public float LaneSpacing { get; private set; } = 1.5f;
-        [field: SerializeField] public float UnitOffset { get; private set; } = 1f;
-        [field: SerializeField] public float TapPlaneHalfWidth { get; private set; } = 0.5f;
+        [field: SerializeField] public LaneViewConfigSO LaneViewConfig { get; private set; }
 
         private Transform[] _laneRoots;
         private float _laneSpacing;
@@ -26,7 +25,7 @@ namespace Game.Views
         }
 
         public Transform GetLaneRoot(int laneIndex) => _laneRoots[laneIndex];
-        public Vector3 GetUnitLocalPosition(int slotIndex) => new(0f, 0f, -slotIndex * UnitOffset);
+        public Vector3 GetUnitLocalPosition(int slotIndex) => new(0f, 0f, -slotIndex * LaneViewConfig.UnitOffset);
 
         public void PlaceUnit(int laneIndex, int slotIndex, BaseLaneUnitObject unit)
         {
@@ -57,7 +56,7 @@ namespace Game.Views
             if (idx < 0 || idx >= _laneRoots.Length) return false;
 
             float laneCenterLocalX = _firstLaneLocalX + idx * _laneSpacing;
-            if (Mathf.Abs(localHit.x - laneCenterLocalX) > TapPlaneHalfWidth) return false;
+            if (Mathf.Abs(localHit.x - laneCenterLocalX) > LaneViewConfig.TapPlaneHalfWidth) return false;
 
             laneIndex = idx;
             return true;
@@ -72,10 +71,10 @@ namespace Game.Views
             var rightLocal = Root.InverseTransformPoint(RightPoint.position);
 
             float availableWidth = rightLocal.x - leftLocal.x;
-            float desiredWidth = (laneCount - 1) * LaneSpacing;
+            float desiredWidth = (laneCount - 1) * LaneViewConfig.LaneSpacing;
             _laneSpacing = desiredWidth > availableWidth && laneCount > 1
                 ? availableWidth / (laneCount - 1)
-                : LaneSpacing;
+                : LaneViewConfig.LaneSpacing;
 
             float usedWidth = (laneCount - 1) * _laneSpacing;
             float centerX = (leftLocal.x + rightLocal.x) * 0.5f;

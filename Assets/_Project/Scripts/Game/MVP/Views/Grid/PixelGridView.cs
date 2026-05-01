@@ -1,6 +1,7 @@
 using System;
 using Core.Utils;
 using Game.Grid.Item;
+using Game.Lane.Configs;
 using UnityEngine;
 
 namespace Game.Views
@@ -14,13 +15,7 @@ namespace Game.Views
         [field: SerializeField] public float Spacing { get; private set; } = 0f;
         [field: SerializeField] public float PixelHeight { get; private set; } = 1f;
         
-        [field: Header("Lane Orbit Path Settings")]
-        [field: SerializeField] public float OrbitOffset { get; private set; } = 1f;
-        [field: SerializeField] public float LaunchOffsetFromLeft { get; private set; } = 1f;
-        
-        [field: SerializeField, Range(0f, 2f)] public float CornerRadius { get; private set; } = 0.5f;
-        [field: SerializeField, Range(0f, 2f)] public float CornerOutwardOffset { get; private set; } = 0f;
-        [field: SerializeField, Range(1, 8)] public int CornerSegments { get; private set; } = 4;
+        [field: SerializeField] public LaneOrbitPathConfigSO LaneOrbitPathConfig { get; private set; }
 
         private Vector3 _startPosition;
         public Vector3 AreaPointAPosition => AreaPointA.position;

@@ -1,5 +1,6 @@
 using System;
 using Game.Grid.Item;
+using Game.Lane.Configs;
 using UnityEngine;
 
 namespace Game.Views
@@ -12,11 +13,7 @@ namespace Game.Views
         float CellSize { get; }
         int Width { get; }
         int Height { get; }
-        float OrbitOffset { get; }
-        float LaunchOffsetFromLeft { get; }
-        float CornerRadius { get; }
-        float CornerOutwardOffset { get; }
-        int CornerSegments { get; }
+        LaneOrbitPathConfigSO LaneOrbitPathConfig { get; }
 
         void Initialize(int width, int height);
         Vector3 GetWorldPosition(Vector2Int coord);

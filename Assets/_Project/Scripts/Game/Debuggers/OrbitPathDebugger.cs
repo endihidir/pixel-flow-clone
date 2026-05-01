@@ -25,6 +25,8 @@ namespace Game.Debugging
 
         private void OnDrawGizmos()
         {
+            if(!_drawNodeIndices) return;
+            
             if (!_hasPath) return;
             
             Gizmos.color = Color.yellow;

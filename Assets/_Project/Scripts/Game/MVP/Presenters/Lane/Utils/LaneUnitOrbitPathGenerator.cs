@@ -11,20 +11,22 @@ namespace Game.Utils
         {
             var pointA = pixelGridView.AreaPointAPosition;
             var pointB = pixelGridView.AreaPointBPosition;
-            float offset = pixelGridView.OrbitOffset;
+            float offsetX = pixelGridView.LaneOrbitPathConfig.OrbitOffset.x;
+            float offsetY = pixelGridView.LaneOrbitPathConfig.OrbitOffset.y;
+            float offsetZ = pixelGridView.LaneOrbitPathConfig.OrbitOffset.z;
             float cellSize = pixelGridView.CellSize;
             int width = pixelGridView.Width;
             int height = pixelGridView.Height;
-            float launchOffset = pixelGridView.LaunchOffsetFromLeft;
-            float cornerRadius = pixelGridView.CornerRadius;
-            float cornerOutwardOffset = pixelGridView.CornerOutwardOffset;
-            int cornerSegments = pixelGridView.CornerSegments;
+            float launchOffset = pixelGridView.LaneOrbitPathConfig.LaunchOffsetFromLeft;
+            float cornerRadius = pixelGridView.LaneOrbitPathConfig.CornerRadius;
+            float cornerOutwardOffset = pixelGridView.LaneOrbitPathConfig.CornerOutwardOffset;
+            int cornerSegments = pixelGridView.LaneOrbitPathConfig.CornerSegments;
 
-            float minX = Mathf.Min(pointA.x, pointB.x) - offset;
-            float maxX = Mathf.Max(pointA.x, pointB.x) + offset;
-            float minZ = Mathf.Min(pointA.z, pointB.z) - offset;
-            float maxZ = Mathf.Max(pointA.z, pointB.z) + offset;
-            float y = pointA.y;
+            float minX = Mathf.Min(pointA.x, pointB.x) - offsetX;
+            float maxX = Mathf.Max(pointA.x, pointB.x) + offsetX;
+            float minZ = Mathf.Min(pointA.z, pointB.z) - offsetZ;
+            float maxZ = Mathf.Max(pointA.z, pointB.z) + offsetZ;
+            float y = offsetY;
 
             int totalNodes = 2 * width + 2 * height;
             var nodes = new OrbitNode[totalNodes];
