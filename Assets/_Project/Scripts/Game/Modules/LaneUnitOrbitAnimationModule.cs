@@ -60,10 +60,16 @@ namespace Game.Modules
             _moveTween?.Kill();
             _rotateTween?.Kill();
             _aimTween?.Kill();
+            
             Transform.rotation = Quaternion.identity;
             UnitHolder.localRotation = Quaternion.identity;
         }
 
-        private void OnDestroy() => Dispose();
+        private void OnDestroy()
+        {
+            _moveTween = null;
+            _rotateTween = null;
+            _aimTween = null;
+        }
     }
 }

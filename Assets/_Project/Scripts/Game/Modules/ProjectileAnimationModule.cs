@@ -25,6 +25,6 @@ namespace Game.Modules
         }
 
         public void Dispose() => _moveTween?.Kill();
-        private void OnDestroy() => Dispose();
+        private void OnDestroy() => _moveTween = null;
     }
 }

@@ -54,6 +54,41 @@ namespace Game.Models
             var newFront = list.Count > 0 ? list[0] : null;
             OnUnitAdvanced?.Invoke(laneIndex, newFront);
         }
+        
+        public bool TryGetLaneSlotIndexOf(BaseLaneUnitObject unit, out int laneIndex, out int slotIndex)
+        {
+            for (int lane = 0; lane < _laneUnits.Length; lane++)
+            {
+                int index = _laneUnits[lane].IndexOf(unit);
+
+                if (index < 0)
+                    continue;
+
+                laneIndex = lane;
+                slotIndex = index;
+                return true;
+            }
+
+            laneIndex = -1;
+            slotIndex = -1;
+            return false;
+        }
+
+        public void RemoveUnitAt(int laneIndex, int slotIndex)
+        {
+            if (laneIndex < 0 || laneIndex >= _laneUnits.Length)
+                return;
+
+            var units = _laneUnits[laneIndex];
+
+            if (slotIndex < 0 || slotIndex >= units.Count)
+                return;
+
+            units.RemoveAt(slotIndex);
+
+            var frontUnit = units.Count > 0 ? units[0] : null;
+            OnUnitAdvanced?.Invoke(laneIndex, frontUnit);
+        }
 
         public int GetUnitCount(int laneIndex) => _laneUnits[laneIndex].Count;
         public BaseLaneUnitObject GetUnitAt(int laneIndex, int slot) => _laneUnits[laneIndex][slot];

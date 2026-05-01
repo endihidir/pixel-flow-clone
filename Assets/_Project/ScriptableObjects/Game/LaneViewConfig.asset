@@ -15,3 +15,7 @@ MonoBehaviour:
   <LaneSpacing>k__BackingField: 5
   <UnitOffset>k__BackingField: 5
   <TapPlaneHalfWidth>k__BackingField: 3
+  <UnitTapHalfWidth>k__BackingField: 2
+  <UnitTapHalfDepth>k__BackingField: 2
+  <AdvanceMoveDuration>k__BackingField: 0.15
+  <AdvanceStepDelay>k__BackingField: 0.035

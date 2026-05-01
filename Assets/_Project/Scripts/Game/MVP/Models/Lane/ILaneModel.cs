@@ -12,6 +12,8 @@ namespace Game.Models
         BaseLaneUnitObject GetFrontUnit(int laneIndex);
         bool TryGetLaneIndexOf(BaseLaneUnitObject unit, out int laneIndex);
         void RemoveFrontUnit(int laneIndex);
+        bool TryGetLaneSlotIndexOf(BaseLaneUnitObject unit, out int laneIndex, out int slotIndex);
+        void RemoveUnitAt(int laneIndex, int slotIndex);
         int GetUnitCount(int laneIndex);
         BaseLaneUnitObject GetUnitAt(int laneIndex, int slot);
     }

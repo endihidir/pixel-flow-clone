@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using Game.Lane.Configs;
 using Game.Lane.Item;
 using UnityEngine;
@@ -35,6 +36,11 @@ namespace Game.Views
             unit.SetLocalRotation(Quaternion.identity);
         }
 
+        public async UniTask AnimateUnitToSlot(int slotIndex, int moveOrder, BaseLaneUnitObject unit)
+        {
+            await unit.MotionAnimation.MoveLocalTo(GetUnitLocalPosition(slotIndex), LaneViewConfig.AdvanceMoveDuration, moveOrder * LaneViewConfig.AdvanceStepDelay);
+        }
+
         public bool TryGetLaneIndexAtScreenPoint(Vector2 screenPoint, Camera cam, out int laneIndex)
         {
             laneIndex = -1;
@@ -59,6 +65,47 @@ namespace Game.Views
             if (Mathf.Abs(localHit.x - laneCenterLocalX) > LaneViewConfig.TapPlaneHalfWidth) return false;
 
             laneIndex = idx;
+            return true;
+        }
+
+        public bool TryGetLaneUnitSlotAtScreenPoint(Vector2 screenPoint, Camera cam, int laneIndex, int unitCount, out int slotIndex)
+        {
+            slotIndex = -1;
+            if (cam == null || _laneRoots == null || laneIndex < 0 || laneIndex >= _laneRoots.Length || unitCount <= 0) return false;
+
+            var planeOrigin = Root.position;
+            var planeNormal = Root.up;
+            var plane = new Plane(planeNormal, planeOrigin);
+
+            var ray = cam.ScreenPointToRay(screenPoint);
+            if (!plane.Raycast(ray, out float enter)) return false;
+
+            var worldHit = ray.GetPoint(enter);
+            var localHit = Root.InverseTransformPoint(worldHit);
+            var laneRootLocalPos = _laneRoots[laneIndex].localPosition;
+
+            float bestSqrDist = float.MaxValue;
+            int bestSlotIndex = -1;
+
+            for (int i = 0; i < unitCount; i++)
+            {
+                var unitLocalPos = laneRootLocalPos + GetUnitLocalPosition(i);
+                float dx = Mathf.Abs(localHit.x - unitLocalPos.x);
+                float dz = Mathf.Abs(localHit.z - unitLocalPos.z);
+
+                if (dx > LaneViewConfig.UnitTapHalfWidth) continue;
+                if (dz > LaneViewConfig.UnitTapHalfDepth) continue;
+
+                float sqrDist = dx * dx + dz * dz;
+                if (sqrDist >= bestSqrDist) continue;
+
+                bestSqrDist = sqrDist;
+                bestSlotIndex = i;
+            }
+
+            if (bestSlotIndex == -1) return false;
+
+            slotIndex = bestSlotIndex;
             return true;
         }
 

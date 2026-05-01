@@ -7,7 +7,7 @@ namespace Game.Modules
     public sealed class LaneUnitMotionAnimationModule : MonoBehaviour
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
-        [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.35f;
+        [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.2f;
 
         private Tween _moveTween;
         private Tween _scaleTween;
@@ -16,6 +16,13 @@ namespace Game.Modules
         {
             _moveTween?.Kill();
             _moveTween = Transform.DOMove(worldPos, duration).SetEase(ease);
+            return _moveTween;
+        }
+        
+        public Tween MoveLocalTo(Vector3 localPos, float duration, float delay = 0f, Ease ease = Ease.OutQuad)
+        {
+            _moveTween?.Kill();
+            _moveTween = Transform.DOLocalMove(localPos, duration).SetDelay(delay).SetEase(ease);
             return _moveTween;
         }
 

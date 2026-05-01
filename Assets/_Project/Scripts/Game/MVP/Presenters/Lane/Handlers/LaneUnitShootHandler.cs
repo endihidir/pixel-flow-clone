@@ -35,7 +35,7 @@ namespace Game.Handlers
         private readonly List<BaseLaneUnitObject> _activeOrbiters = new(MaxActiveOrbiters);
 
         private LaneUnitOrbitPath _orbitPath;
-        private bool _isInitialized;
+        private bool _isInitialized, _isDisposing;
 
         public LaneUnitShootHandler(LanePresenter lanePresenter, UnitSlotPresenter unitSlotPresenter,
             ILaneModel laneModel, IUnitSlotModel unitSlotModel, IPixelGridModel pixelGridModel,
@@ -59,6 +59,7 @@ namespace Game.Handlers
 
         public void Dispose()
         {
+            _isDisposing = true;
             _lanePresenter.OnFrontUnitTapped -= OnFrontUnitTapped;
             _unitSlotPresenter.OnSlotUnitTapped -= OnSlotUnitTapped;
             _pixelGridView.OnViewInitialized -= OnPixelGridReady;
@@ -129,6 +130,7 @@ namespace Game.Handlers
             }
 
             var pixel = _pixelGridModel.GetGridObject(coord);
+            
             if (!pixel)
             {
                 if (!aimLocked) unit.OrbitAnimation.ResetAimImmediate();
@@ -155,25 +157,43 @@ namespace Game.Handlers
 
         private async UniTask FireAsync(BaseLaneUnitObject unit, BasePixelCellObject pixel)
         {
+            if (_isDisposing || !unit || !pixel) return;
+
             var ball = _projectileFactory.GetProjectile<BallProjectileObject>();
             var spawnPos = unit.ProjectileSpawnPoint.position;
             var targetPos = pixel.transform.position;
             float duration = Mathf.Clamp(Vector3.Distance(spawnPos, targetPos) / BallSpeed, MinBallDuration, MaxBallDuration);
 
             ball.transform.position = spawnPos;
+
             await ball.MoveAnimation.MoveTo(targetPos, duration);
-            _projectileFactory.ReleaseProjectile(ball);
+
+            if (!_isDisposing && ball)
+                _projectileFactory.ReleaseProjectile(ball);
+
+            if (_isDisposing || !pixel || !pixel.gameObject.activeInHierarchy) return;
 
             await pixel.CellAnimation.PlayBounceAndScaleDown();
+
+            if (_isDisposing || !pixel || !pixel.gameObject.activeInHierarchy) return;
+
             _pixelCellFactory.ReleasePixelCell(pixel);
         }
 
         private async UniTask ReleaseUnit(BaseLaneUnitObject unit)
         {
+            if (_isDisposing || !unit) return;
+
             _activeOrbiters.Remove(unit);
+
             await unit.MotionAnimation.ScaleDown();
+
+            if (_isDisposing || !unit || !unit.gameObject.activeInHierarchy) return;
+
             _laneUnitFactory.ReleaseLaneUnit(unit);
-            unit.MotionAnimation.ResetScale();
+
+            if (unit)
+                unit.MotionAnimation.ResetScale();
         }
 
         private bool ShouldStartWithInwardAim(BaseLaneUnitObject unit)
