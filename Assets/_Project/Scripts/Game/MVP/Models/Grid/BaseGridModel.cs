@@ -70,6 +70,7 @@ namespace Core.Models
         public void SetGridObject(Vector2Int coord, T value)
         {
             if (!IsInRange(coord.x, coord.y)) return;
+            
             SetInternal(coord, value);
         }
         
@@ -120,6 +121,18 @@ namespace Core.Models
         public bool IsCellActive(Vector2Int coord) => IsInRange(coord.x, coord.y) && ActiveCells[coord.x, coord.y];
         public bool IsInRange(Vector2Int coord) => IsInRange(coord.x, coord.y);
         public bool IsInRange(int x, int y) => x >= 0 && y >= 0 && x < Width && y < Height;
+        public bool IsAllNull()
+        {
+            for (int i = 0; i < GridLenght; i++)
+            {
+                var coord = GridIndexUtil.ToCoord(i, Width);
+
+                if (GridArray[coord.x, coord.y] != null)
+                    return false;
+            }
+
+            return true;
+        }
 
         protected virtual void SetInternal(Vector2Int coord, T value, bool raiseEvent = true)
         {

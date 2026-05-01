@@ -4,17 +4,44 @@ using UnityEngine;
 
 namespace Game.Modules
 {
-    public sealed class LaneUnitOrbitAnimationModule : MonoBehaviour
+    public sealed class LaneUnitAnimationModule : MonoBehaviour
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
         [field: SerializeField, Required] public Transform UnitHolder { get; private set; }
         [field: SerializeField] public float OrbitSpeed { get; private set; } = 15f;
         [field: SerializeField] public float AimLocalYaw { get; private set; } = -90f;
         [field: SerializeField] public float AimRotateDuration { get; private set; } = 0.02f;
+        [field: SerializeField] public float DefaultJumpDuration { get; private set; } = 0.4f;
+        [field: SerializeField] public float DefaultJumpPower { get; private set; } = 10f;
+        [field: SerializeField] public float ScaleDownDuration { get; private set; } = 0.2f;
 
         private Tween _moveTween;
         private Tween _rotateTween;
         private Tween _aimTween;
+        private Tween _scaleTween;
+        
+        public Tween MoveLocalTo(Vector3 localPos, float duration, float delay = 0f, Ease ease = Ease.OutQuad)
+        {
+            _moveTween?.Kill();
+            _moveTween = Transform.DOLocalMove(localPos, duration).SetDelay(delay).SetEase(ease);
+            return _moveTween;
+        }
+
+        public Tween JumpTo(Vector3 worldPos, float jumpPower = 0, float duration = 0)
+        {
+            _moveTween?.Kill();
+            var power = jumpPower > 0 ? jumpPower : DefaultJumpPower;
+            var dur = duration > 0 ? duration : DefaultJumpDuration;
+            _moveTween = Transform.DOJump(worldPos, power, 1, dur).SetEase(Ease.Linear);
+            return _moveTween;
+        }
+
+        public Tween ScaleDown()
+        {
+            _scaleTween?.Kill();
+            _scaleTween = Transform.DOScale(Vector3.zero, ScaleDownDuration).SetEase(Ease.InBack);
+            return _scaleTween;
+        }
 
         public Tween MoveSegment(Vector3 toPos, float duration)
         {
@@ -36,7 +63,7 @@ namespace Game.Modules
             Transform.rotation = Quaternion.Euler(0f, yaw, 0f);
         }
 
-        public Tween AimAtPixel()
+        public Tween AimAtPixelGrid()
         {
             _aimTween?.Kill();
             _aimTween = UnitHolder.DOLocalRotateQuaternion(Quaternion.Euler(0f, AimLocalYaw, 0f), AimRotateDuration).SetEase(Ease.OutSine);
@@ -47,6 +74,14 @@ namespace Game.Modules
         {
             _aimTween?.Kill();
             UnitHolder.localRotation = Quaternion.Euler(0f, AimLocalYaw, 0f);
+        }
+
+        public Tween ResetAim(float duration = 0f)
+        {
+            _aimTween?.Kill();
+            var dur = duration > 0 ? duration : AimRotateDuration;
+            _aimTween = UnitHolder.DOLocalRotateQuaternion(Quaternion.identity, dur).SetEase(Ease.OutSine);
+            return _aimTween;
         }
 
         public void ResetAimImmediate()
@@ -60,16 +95,21 @@ namespace Game.Modules
             _moveTween?.Kill();
             _rotateTween?.Kill();
             _aimTween?.Kill();
+            _scaleTween?.Kill();
 
             Transform.rotation = Quaternion.identity;
             UnitHolder.localRotation = Quaternion.identity;
+            ResetScale();
         }
+        
+        public void ResetScale() => Transform.localScale = Vector3.one;
 
         private void OnDestroy()
         {
             _moveTween = null;
             _rotateTween = null;
             _aimTween = null;
+            _scaleTween = null;
         }
     }
 }

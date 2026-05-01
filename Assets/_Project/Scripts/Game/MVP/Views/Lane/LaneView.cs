@@ -39,7 +39,7 @@ namespace Game.Views
 
         public async UniTask AnimateUnitToSlot(int slotIndex, int moveOrder, BaseLaneUnitObject unit)
         {
-            await unit.MotionAnimation.MoveLocalTo(GetUnitLocalPosition(slotIndex), LaneViewConfig.AdvanceMoveDuration, moveOrder * LaneViewConfig.AdvanceStepDelay);
+            await unit.Animation.MoveLocalTo(GetUnitLocalPosition(slotIndex), LaneViewConfig.AdvanceMoveDuration, moveOrder * LaneViewConfig.AdvanceStepDelay);
         }
 
         public bool TryGetLaneIndexAtScreenPoint(Vector2 screenPoint, out int laneIndex)

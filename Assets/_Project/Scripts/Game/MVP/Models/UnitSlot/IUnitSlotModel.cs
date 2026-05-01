@@ -9,9 +9,12 @@ namespace Game.Models
 
         event Action<int, BaseLaneUnitObject> OnUnitAdded;
         event Action<int, BaseLaneUnitObject> OnUnitRemoved;
+        event Action<int, int, BaseLaneUnitObject> OnUnitShifted;
+        event Action OnSlotFull;
 
         void Initialize(int slotCount);
         bool TryAddUnit(BaseLaneUnitObject unit, out int slotIndex);
+        bool TryRemoveUnitAndShiftLeft(int slotIndex, out BaseLaneUnitObject unit);
         void RemoveUnit(int slotIndex);
         BaseLaneUnitObject GetUnitAt(int slotIndex);
         bool IsEmpty(int slotIndex);

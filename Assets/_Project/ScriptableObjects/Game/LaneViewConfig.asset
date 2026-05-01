@@ -18,4 +18,4 @@ MonoBehaviour:
   <UnitTapHalfWidth>k__BackingField: 2
   <UnitTapHalfDepth>k__BackingField: 2
   <AdvanceMoveDuration>k__BackingField: 0.15
-  <AdvanceStepDelay>k__BackingField: 0.035
+  <AdvanceStepDelay>k__BackingField: 0.02

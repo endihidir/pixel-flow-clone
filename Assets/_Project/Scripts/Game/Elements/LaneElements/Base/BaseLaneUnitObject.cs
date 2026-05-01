@@ -14,8 +14,7 @@ namespace Game.Lane.Item
         [field: SerializeField] public Transform ProjectileSpawnPoint { get; private set; }
         [field: SerializeField] public MeshRenderer UnitRenderer { get; private set; }
         [field: SerializeField] public TMP_Text AmmoText { get; private set; }
-        [field: SerializeField] public LaneUnitMotionAnimationModule MotionAnimation { get; private set; }
-        [field: SerializeField] public LaneUnitOrbitAnimationModule OrbitAnimation { get; private set; }
+        [field: SerializeField] public LaneUnitAnimationModule Animation { get; private set; }
 
         private MaterialPropertyBlock _materialPropertyBlock;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -62,8 +61,7 @@ namespace Game.Lane.Item
 
         public void ResetUnit()
         {
-            MotionAnimation?.Dispose();
-            OrbitAnimation?.Dispose();
+            Animation?.Dispose();
             ColorId = ColorId.None;
             Ammo = 0;
             RefreshAmmoText();

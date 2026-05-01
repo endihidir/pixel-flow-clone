@@ -158,7 +158,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8368027734857410717}
   - component: {fileID: 2360986960527617778}
-  - component: {fileID: 5847730777310977034}
   - component: {fileID: 385616583353209432}
   m_Layer: 0
   m_Name: PigUnitObject
@@ -200,22 +199,8 @@ MonoBehaviour:
   <ProjectileSpawnPoint>k__BackingField: {fileID: 3749636934853496116}
   <UnitRenderer>k__BackingField: {fileID: 8148037968932223218}
   <AmmoText>k__BackingField: {fileID: 893515995669762003}
-  <MotionAnimation>k__BackingField: {fileID: 5847730777310977034}
-  <OrbitAnimation>k__BackingField: {fileID: 385616583353209432}
---- !u!114 &5847730777310977034
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8329871233716680213}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4a7fe2b028fdd064d963598640af1a65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  <Transform>k__BackingField: {fileID: 8368027734857410717}
-  <ScaleDownDuration>k__BackingField: 0.2
+  <MotionAnimation>k__BackingField: {fileID: 0}
+  <Animation>k__BackingField: {fileID: 385616583353209432}
 --- !u!114 &385616583353209432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -230,8 +215,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <Transform>k__BackingField: {fileID: 8368027734857410717}
   <UnitHolder>k__BackingField: {fileID: 2745698214585574325}
+  <OrbitSpeed>k__BackingField: 23
   <AimLocalYaw>k__BackingField: -90
   <AimRotateDuration>k__BackingField: 0.02
+  <LaunchMoveDuration>k__BackingField: 0.4
+  <LaunchJumpPower>k__BackingField: 10
+  <ScaleDownDuration>k__BackingField: 0.2
 --- !u!1 &8962120919185949376
 GameObject:
   m_ObjectHideFlags: 0

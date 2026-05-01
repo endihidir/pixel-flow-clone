@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Game.Data;
@@ -7,7 +8,6 @@ using Game.Lane.Item;
 using Game.Models;
 using Game.Utils;
 using Game.Views;
-using UnityEngine;
 
 namespace Game.Handlers
 {
@@ -67,9 +67,9 @@ namespace Game.Handlers
         public void OnSlotUnitTapped(int slotIndex, BaseLaneUnitObject unit)
         {
             if (!CanStartOrbit(unit)) return;
+            if (!_unitSlotModel.TryRemoveUnitAndShiftLeft(slotIndex, out var removedUnit)) return;
 
-            _unitSlotModel.RemoveUnit(slotIndex);
-            LaunchAndRunOrbitAsync(unit).Forget();
+            LaunchAndRunOrbitAsync(removedUnit).Forget();
         }
 
         private bool CanStartOrbit(BaseLaneUnitObject unit)
@@ -87,16 +87,19 @@ namespace Game.Handlers
 
             int startIdx = _orbitPath.LaunchNodeIndex;
             var launchPos = _orbitPath.Nodes[startIdx].Position;
-
-            await unit.MotionAnimation.JumpToLaunchPosition(launchPos);
+            
+            await unit.Animation.JumpTo(launchPos);
 
             bool aimLocked = ShouldStartWithInwardAim(unit);
 
-            unit.OrbitAnimation.SetPathRotationImmediate(_orbitPath.Nodes[startIdx].PathYaw);
-            if (aimLocked) unit.OrbitAnimation.SetAimImmediate();
-            else unit.OrbitAnimation.ResetAimImmediate();
+            unit.Animation.SetPathRotationImmediate(_orbitPath.Nodes[startIdx].PathYaw);
 
-            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.OrbitAnimation.OrbitSpeed, aimLocked, HandleTriggerAtNode);
+            if (aimLocked)
+                unit.Animation.SetAimImmediate();
+            else
+                unit.Animation.ResetAimImmediate();
+
+            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.Animation.OrbitSpeed, aimLocked, HandleTriggerAtNode);
 
             HandleOrbitCompleted(unit);
         }
@@ -107,7 +110,7 @@ namespace Game.Handlers
 
             if (!OrbitLineSearcher.TryFindMatchingPixelOnLine(_pixelGridModel, node, unit.ColorId, out var coord))
             {
-                if (!aimLocked) unit.OrbitAnimation.ResetAimImmediate();
+                if (!aimLocked) unit.Animation.ResetAimImmediate();
                 return aimLocked;
             }
 
@@ -115,14 +118,14 @@ namespace Game.Handlers
 
             if (!pixel)
             {
-                if (!aimLocked) unit.OrbitAnimation.ResetAimImmediate();
+                if (!aimLocked) unit.Animation.ResetAimImmediate();
                 return aimLocked;
             }
 
             _pixelGridModel.SetGridObject(coord, null);
             unit.ConsumeAmmo(1);
 
-            if (!aimLocked) await unit.OrbitAnimation.AimAtPixel();
+            if (!aimLocked) await unit.Animation.AimAtPixelGrid();
 
             FireAsync(unit, pixel).Forget();
 
@@ -135,6 +138,10 @@ namespace Game.Handlers
         private void HandleOrbitCompleted(BaseLaneUnitObject unit)
         {
             _activeOrbiters.Remove(unit);
+
+            if (_isDisposing || !unit || unit.Ammo <= 0 || !unit.gameObject.activeInHierarchy) return;
+
+            if (_unitSlotModel.TryAddUnit(unit, out _)) return;
         }
 
         private async UniTask FireAsync(BaseLaneUnitObject unit, BasePixelCellObject pixel)
@@ -167,14 +174,14 @@ namespace Game.Handlers
 
             _activeOrbiters.Remove(unit);
 
-            await unit.MotionAnimation.ScaleDown();
+            await unit.Animation.ScaleDown();
 
             if (_isDisposing || !unit || !unit.gameObject.activeInHierarchy) return;
 
             _laneUnitFactory.ReleaseLaneUnit(unit);
 
             if (unit)
-                unit.MotionAnimation.ResetScale();
+                unit.Animation.ResetScale();
         }
 
         private bool ShouldStartWithInwardAim(BaseLaneUnitObject unit)

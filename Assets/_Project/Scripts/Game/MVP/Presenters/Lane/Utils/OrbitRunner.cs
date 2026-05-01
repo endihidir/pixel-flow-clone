@@ -31,9 +31,9 @@ namespace Game.Utils
                 float duration = speed > 0f ? distance / speed : 0f;
 
                 if (!Mathf.Approximately(Mathf.DeltaAngle(fromNode.PathYaw, toNode.PathYaw), 0f))
-                    unit.OrbitAnimation.RotateToPathYaw(toNode.PathYaw, duration);
+                    unit.Animation.RotateToPathYaw(toNode.PathYaw, duration);
 
-                await unit.OrbitAnimation.MoveSegment(toNode.Position, duration);
+                await unit.Animation.MoveSegment(toNode.Position, duration);
 
                 if (ShouldStop()) return;
 

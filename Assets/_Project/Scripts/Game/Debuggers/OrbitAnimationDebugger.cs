@@ -27,8 +27,8 @@ namespace Game.Debugging
 
             int startIdx = _path.LaunchNodeIndex;
             _testUnit.transform.position = _path.Nodes[startIdx].Position;
-            _testUnit.OrbitAnimation.SetPathRotationImmediate(_path.Nodes[startIdx].PathYaw);
-            _testUnit.OrbitAnimation.ResetAimImmediate();
+            _testUnit.Animation.SetPathRotationImmediate(_path.Nodes[startIdx].PathYaw);
+            _testUnit.Animation.ResetAimImmediate();
 
             OrbitRunner.Run(_testUnit, _path, startIdx, _speed, false, null).Forget();
         }

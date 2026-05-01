@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using Game.Handlers;
 using Game.Lane.Item;
 using Game.Models;
@@ -23,12 +24,18 @@ namespace Game.Presenters
             _laneUnitShootHandler = laneUnitShootHandler;
 
             _model.OnUnitAdded += OnUnitAdded;
+            _model.OnUnitShifted += OnUnitShifted;
             _inputService.OnTap += OnTap;
         }
 
         private void OnUnitAdded(int slotIndex, BaseLaneUnitObject unit)
         {
-            _view.PlaceUnit(slotIndex, unit);
+            _view.JumpUnitToSlot(slotIndex, unit).Forget();
+        }
+
+        private void OnUnitShifted(int fromSlotIndex, int toSlotIndex, BaseLaneUnitObject unit)
+        {
+            _view.JumpUnitToSlot(toSlotIndex, unit).Forget();
         }
 
         private void OnTap(Vector2 screenPoint)
@@ -37,12 +44,13 @@ namespace Game.Presenters
             if (_model.IsEmpty(slotIndex)) return;
 
             var unit = _model.GetUnitAt(slotIndex);
-            _laneUnitShootHandler?.OnSlotUnitTapped(slotIndex, unit);
+            _laneUnitShootHandler.OnSlotUnitTapped(slotIndex, unit);
         }
 
         public void Dispose()
         {
             _model.OnUnitAdded -= OnUnitAdded;
+            _model.OnUnitShifted -= OnUnitShifted;
             _inputService.OnTap -= OnTap;
         }
     }

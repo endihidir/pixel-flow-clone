@@ -34,5 +34,6 @@ namespace Core.Models
         
         bool IsInRange(Vector2Int coord);
         bool IsInRange(int x, int y) => IsInRange(new Vector2Int(x, y));
+        bool IsAllNull();
     }
 }

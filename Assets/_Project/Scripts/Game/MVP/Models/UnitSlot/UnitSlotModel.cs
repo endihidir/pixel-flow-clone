@@ -11,6 +11,8 @@ namespace Game.Models
 
         public event Action<int, BaseLaneUnitObject> OnUnitAdded;
         public event Action<int, BaseLaneUnitObject> OnUnitRemoved;
+        public event Action<int, int, BaseLaneUnitObject> OnUnitShifted;
+        public event Action OnSlotFull;
 
         public void Initialize(int slotCount)
         {
@@ -22,30 +24,68 @@ namespace Game.Models
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i] != null) continue;
+
                 _slots[i] = unit;
                 slotIndex = i;
                 OnUnitAdded?.Invoke(i, unit);
                 return true;
             }
+
+            OnSlotFull?.Invoke();
             slotIndex = -1;
             return false;
         }
 
-        public void RemoveUnit(int slotIndex)
+        public bool TryRemoveUnitAndShiftLeft(int slotIndex, out BaseLaneUnitObject unit)
         {
-            var unit = _slots[slotIndex];
-            if (unit == null) return;
+            unit = null;
+
+            if (slotIndex < 0 || slotIndex >= _slots.Length) return false;
+
+            unit = _slots[slotIndex];
+
+            if (unit == null) return false;
+
             _slots[slotIndex] = null;
             OnUnitRemoved?.Invoke(slotIndex, unit);
+
+            for (int i = slotIndex + 1; i < _slots.Length; i++)
+            {
+                var shiftedUnit = _slots[i];
+
+                if (shiftedUnit == null) continue;
+
+                _slots[i - 1] = shiftedUnit;
+                _slots[i] = null;
+
+                OnUnitShifted?.Invoke(i, i - 1, shiftedUnit);
+            }
+
+            return true;
         }
 
-        public BaseLaneUnitObject GetUnitAt(int slotIndex) => _slots[slotIndex];
-        public bool IsEmpty(int slotIndex) => _slots[slotIndex] == null;
+        public void RemoveUnit(int slotIndex)
+        {
+            TryRemoveUnitAndShiftLeft(slotIndex, out _);
+        }
+
+        public BaseLaneUnitObject GetUnitAt(int slotIndex)
+        {
+            return _slots[slotIndex];
+        }
+
+        public bool IsEmpty(int slotIndex)
+        {
+            return _slots[slotIndex] == null;
+        }
 
         public bool IsFull()
         {
             for (int i = 0; i < _slots.Length; i++)
+            {
                 if (_slots[i] == null) return false;
+            }
+
             return true;
         }
 
@@ -54,9 +94,11 @@ namespace Game.Models
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i] != unit) continue;
+
                 slotIndex = i;
                 return true;
             }
+
             slotIndex = -1;
             return false;
         }

@@ -15,7 +15,6 @@ namespace Game.Grid.Item
         [field: SerializeField] public PixelCellAnimationModule CellAnimation { get; private set; }
         
         private MaterialPropertyBlock _materialPropertyBlock;
-        
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 
         private void Awake()
