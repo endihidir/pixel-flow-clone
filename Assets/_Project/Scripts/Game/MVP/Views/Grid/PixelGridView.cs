@@ -12,6 +12,7 @@ namespace Game.Views
         [field: SerializeField] public Transform PixelsParent { get; private set; }
         [field: SerializeField] public Transform AreaPointA { get; private set; }
         [field: SerializeField] public Transform AreaPointB { get; private set; }
+        [field: SerializeField] public Transform OrbitRoot { get; private set; }
         [field: SerializeField] public float Spacing { get; private set; } = 0f;
         [field: SerializeField] public float PixelHeight { get; private set; } = 1f;
         

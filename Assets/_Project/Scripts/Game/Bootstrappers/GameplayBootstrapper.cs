@@ -2,6 +2,7 @@ using Core.Pool.Services;
 using Game.Configs;
 using Game.Factory.Handlers;
 using Game.Factories;
+using Game.Handlers;
 using Game.Level.Services;
 using Game.Models;
 using Game.Presenters;
@@ -23,6 +24,8 @@ namespace Game.Bootstrappers
         private LanePresenter _lanePresenter;
         private UnitSlotPresenter _unitSlotPresenter;
         private IInputService _inputService;
+        private LaneUnitShootHandler _laneUnitShootHandler;
+        
 
         public void Initialize(IObjectPoolService poolService, ILevelDefinitionProvider levelDefinitionProvider, GameplayConfigContainerSO gameplayConfig)
         {
@@ -39,10 +42,14 @@ namespace Game.Bootstrappers
             IPixelCellFactoryHandler pixelCellFactoryHandler = new PixelCellFactoryHandler(pixelCellFactory, gameplayConfig.ColorPalette);
             ILaneUnitFactoryHandler laneUnitFactoryHandler = new LaneUnitFactoryHandler(laneUnitFactory, gameplayConfig.ColorPalette);
 
+            
             _pixelGridPresenter = new PixelGridPresenter(pixelGridModel, PixelGridView);
             _lanePresenter = new LanePresenter(laneModel, LaneView, _inputService, GameplayCamera);
             _unitSlotPresenter = new UnitSlotPresenter(unitSlotModel, UnitSlotView, _inputService, GameplayCamera);
 
+            _laneUnitShootHandler = new LaneUnitShootHandler(_lanePresenter, _unitSlotPresenter, laneModel, unitSlotModel, pixelGridModel, PixelGridView, 
+                                                             projectileFactory, laneUnitFactory, pixelCellFactory);
+            
             _gameplaySetupService = new GameplaySetupService(levelDefinitionProvider, pixelCellFactoryHandler, laneUnitFactoryHandler,
                                                                 pixelGridModel, PixelGridView,
                                                                 laneModel, LaneView,
@@ -57,6 +64,7 @@ namespace Game.Bootstrappers
 
         private void OnDestroy()
         {
+            _laneUnitShootHandler?.Dispose();
             _pixelGridPresenter?.Dispose();
             _lanePresenter?.Dispose();
             _unitSlotPresenter?.Dispose();

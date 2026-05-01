@@ -125,6 +125,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2073745893402270615}
   - component: {fileID: 4074187535455467574}
+  - component: {fileID: 4102355669910662331}
   m_Layer: 0
   m_Name: PixelCellObject
   m_TagString: Untagged
@@ -164,3 +165,20 @@ MonoBehaviour:
   <ColorId>k__BackingField: 0
   <PixelRootTransform>k__BackingField: {fileID: 548944737590624921}
   <PixelRenderer>k__BackingField: {fileID: 3844824894943913709}
+  <CellAnimation>k__BackingField: {fileID: 4102355669910662331}
+--- !u!114 &4102355669910662331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7192036083151762593}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d2bbd41dc84814bb3fdfa004c71e53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Transform>k__BackingField: {fileID: 548944737590624921}
+  <PunchScale>k__BackingField: {x: 1.1, y: 1.1, z: 1.1}
+  <PunchDuration>k__BackingField: 0.15
+  <ScaleDownDuration>k__BackingField: 0.15

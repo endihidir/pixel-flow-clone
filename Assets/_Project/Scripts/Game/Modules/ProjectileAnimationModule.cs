@@ -1,10 +1,11 @@
+using System;
 using DG.Tweening;
 using NaughtyAttributes;
 using UnityEngine;
 
 namespace Game.Modules
 {
-    public class UnitMoveAnimationModule : MonoBehaviour
+    public sealed class ProjectileAnimationModule : MonoBehaviour
     {
         [field: SerializeField, Required] public Transform Transform { get; private set; }
 
@@ -12,21 +13,18 @@ namespace Game.Modules
 
         private Tween _moveTween;
 
-        public Transform GetTransform() => Transform ?? transform;
-
-        public virtual Tween MoveTo(Vector3 position, float duration, float delay = 0f, Ease ease = Ease.OutQuad, bool useUnscaledTime = false)
+        public Tween MoveTo(Vector3 worldPosition, float duration, Action onComplete = null, Ease ease = Ease.Linear)
         {
             _moveTween?.Kill();
 
-            _moveTween = GetTransform().DOLocalMove(position, duration)
+            _moveTween = Transform.DOMove(worldPosition, duration)
                 .SetEase(ease)
-                .SetDelay(delay)
-                .SetUpdate(useUnscaledTime);
+                .OnComplete(() => onComplete?.Invoke());
 
             return _moveTween;
         }
 
-        public void Dispose() => _moveTween?.Kill(true);
+        public void Dispose() => _moveTween?.Kill();
         private void OnDestroy() => Dispose();
     }
 }

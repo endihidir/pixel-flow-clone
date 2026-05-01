@@ -1,5 +1,6 @@
 using Core.Pool.Services;
 using Game.Level.Data;
+using Game.Modules;
 using NaughtyAttributes;
 using UnityEngine;
 
@@ -11,6 +12,7 @@ namespace Game.Grid.Item
         [field: SerializeField, ReadOnly] public ColorId ColorId { get; private set; }
         [field: SerializeField] public Transform PixelRootTransform { get; private set; }
         [field: SerializeField] public MeshRenderer PixelRenderer { get; private set; }
+        [field: SerializeField] public PixelCellAnimationModule CellAnimation { get; private set; }
         
         private MaterialPropertyBlock _materialPropertyBlock;
         

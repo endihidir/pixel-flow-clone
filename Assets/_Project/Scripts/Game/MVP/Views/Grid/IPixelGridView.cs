@@ -10,6 +10,7 @@ namespace Game.Views
         event Action OnViewInitialized;
         Vector3 AreaPointAPosition { get; }
         Vector3 AreaPointBPosition { get; }
+        Transform OrbitRoot { get; }
         float CellSize { get; }
         int Width { get; }
         int Height { get; }

@@ -11,10 +11,11 @@ namespace Game.Lane.Item
     {
         [field: SerializeField, ReadOnly] public ColorId ColorId { get; protected set; }
         [field: SerializeField, ReadOnly] public int Ammo { get; protected set; }
-        [field: SerializeField] public Transform UnitRootTransform { get; private set; }
+        [field: SerializeField] public Transform ProjectileSpawnPoint { get; private set; }
         [field: SerializeField] public MeshRenderer UnitRenderer { get; private set; }
         [field: SerializeField] public TMP_Text AmmoText { get; private set; }
-        [field: SerializeField] public UnitMoveAnimationModule MoveAnimation { get; private set; }
+        [field: SerializeField] public LaneUnitMotionAnimationModule MotionAnimation { get; private set; }
+        [field: SerializeField] public LaneUnitOrbitAnimationModule OrbitAnimation { get; private set; }
 
         private MaterialPropertyBlock _materialPropertyBlock;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -40,10 +41,7 @@ namespace Game.Lane.Item
             RefreshAmmoText();
         }
 
-        private void RefreshAmmoText()
-        {
-            if (AmmoText) AmmoText.SetText(Ammo.ToString());
-        }
+        private void RefreshAmmoText() => AmmoText?.SetText(Ammo.ToString());
 
         private void ApplyColor(Color color)
         {
@@ -64,6 +62,8 @@ namespace Game.Lane.Item
 
         public void ResetUnit()
         {
+            MotionAnimation?.Dispose();
+            OrbitAnimation?.Dispose();
             ColorId = ColorId.None;
             Ammo = 0;
             RefreshAmmoText();

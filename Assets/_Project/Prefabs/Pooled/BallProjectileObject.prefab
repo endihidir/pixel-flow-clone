@@ -93,8 +93,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3784522600280447980}
   - component: {fileID: 7337390975334933578}
+  - component: {fileID: 1054278200749570854}
   m_Layer: 0
-  m_Name: ProjectileObject
+  m_Name: BallProjectileObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -128,6 +129,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: df8e7fa6346146479dd8a6aceb217be0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <MoveAnimation>k__BackingField: {fileID: 1054278200749570854}
+--- !u!114 &1054278200749570854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2546160381126065462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a06d18d56ad14a61b095625e8d9f8efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <Transform>k__BackingField: {fileID: 3784522600280447980}
 --- !u!1 &9206743089920063052
 GameObject:
   m_ObjectHideFlags: 0

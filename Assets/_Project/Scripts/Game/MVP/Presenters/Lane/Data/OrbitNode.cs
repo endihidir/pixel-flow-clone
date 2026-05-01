@@ -7,5 +7,7 @@ namespace Game.Data
         public Vector3 Position;
         public OrbitEdge Edge;
         public int LineIndex;
+        public bool IsTriggerNode;
+        public float PathYaw;
     }
 }

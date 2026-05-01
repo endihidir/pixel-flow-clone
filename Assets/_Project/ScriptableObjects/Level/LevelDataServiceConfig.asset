@@ -15,6 +15,6 @@ MonoBehaviour:
   <ResourcesFolder>k__BackingField: Levels
   <FileNameFormat>k__BackingField: level_{0}
   <UnitSlotSize>k__BackingField: 5
-  <UseTestLevel>k__BackingField: 1
-  <TestLevelIndex>k__BackingField: 2
+  <UseTestLevel>k__BackingField: 0
+  <TestLevelIndex>k__BackingField: 0
   <TargetLevelIndex>k__BackingField: 0

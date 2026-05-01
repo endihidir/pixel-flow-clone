@@ -25,22 +25,23 @@ namespace Game.Debugging
 
         private void OnDrawGizmos()
         {
-            if(!_drawNodeIndices) return;
-            
+            if (!_drawNodeIndices) return;
             if (!_hasPath) return;
-            
-            Gizmos.color = Color.yellow;
+
             for (int i = 0; i < _path.Nodes.Length; i++)
             {
-                Gizmos.color = i == _path.LaunchNodeIndex ? Color.green : Color.yellow;
-                Gizmos.DrawSphere(_path.Nodes[i].Position, _nodeRadius);
+                var node = _path.Nodes[i];
+                if (i == _path.LaunchNodeIndex) Gizmos.color = Color.green;
+                else if (node.IsTriggerNode) Gizmos.color = Color.yellow;
+                else Gizmos.color = Color.gray;
+                Gizmos.DrawSphere(node.Position, _nodeRadius);
             }
-            
+
             Gizmos.color = Color.cyan;
-            for (int i = 0; i < _path.Waypoints.Length; i++)
+            for (int i = 0; i < _path.Nodes.Length; i++)
             {
-                var current = _path.Waypoints[i];
-                var next = _path.Waypoints[(i + 1) % _path.Waypoints.Length];
+                var current = _path.Nodes[i].Position;
+                var next = _path.Nodes[(i + 1) % _path.Nodes.Length].Position;
                 Gizmos.DrawLine(current, next);
             }
         }
