@@ -46,5 +46,7 @@ namespace Game.Factory.Handlers
 
             return pixelCell;
         }
+        
+        public void ReleaseAllPixelCells() => _pixelCellFactory.ReleasePixelCellsByType<PixelCellObject>();
     }
 }

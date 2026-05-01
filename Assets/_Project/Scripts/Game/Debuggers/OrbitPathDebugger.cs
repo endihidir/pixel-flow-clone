@@ -14,8 +14,10 @@ namespace Game.Debugging
 
         private LaneUnitOrbitPath _path;
         private bool _hasPath;
+        
+        private bool IsAppPlaying => Application.isPlaying;
 
-        [Button]
+        [Button, ShowIf(nameof(IsAppPlaying))]
         public void GeneratePath()
         {
             if (!_pixelGridView) return;

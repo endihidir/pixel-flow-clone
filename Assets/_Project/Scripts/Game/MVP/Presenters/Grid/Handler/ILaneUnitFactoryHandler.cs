@@ -6,5 +6,6 @@ namespace Game.Factory.Handlers
     public interface ILaneUnitFactoryHandler
     {
         void PopulateLaneUnits(LaneDefinition[] lanes, out BaseLaneUnitObject[][] laneUnits);
+        void ReleaseAllLaneUnits();
     }
 }

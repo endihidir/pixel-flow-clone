@@ -10,7 +10,7 @@ namespace Game.Models
         event Action<int, BaseLaneUnitObject> OnUnitAdded;
         event Action<int, BaseLaneUnitObject> OnUnitRemoved;
         event Action<int, int, BaseLaneUnitObject> OnUnitShifted;
-        event Action OnSlotFull;
+        event Action OnSlotsFull;
 
         void Initialize(int slotCount);
         bool TryAddUnit(BaseLaneUnitObject unit, out int slotIndex);

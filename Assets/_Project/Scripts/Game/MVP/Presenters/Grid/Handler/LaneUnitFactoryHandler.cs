@@ -43,5 +43,7 @@ namespace Game.Factory.Handlers
             unit.Initialize(colorId, ammo, color);
             return unit;
         }
+        
+        public void ReleaseAllLaneUnits() => _laneUnitFactory.ReleaseLaneUnitsByType<PigUnitObject>();
     }
 }

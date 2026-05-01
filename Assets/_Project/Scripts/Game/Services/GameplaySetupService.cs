@@ -1,4 +1,6 @@
+using Game.Factories;
 using Game.Factory.Handlers;
+using Game.Lane.Item;
 using Game.Level.Services;
 using Game.Models;
 using Game.Views;
@@ -7,9 +9,11 @@ namespace Game.Services
 {
     public sealed class GameplaySetupService : IGameplaySetupService
     {
+        private readonly IInputService _inputService;
         private readonly ILevelDefinitionProvider _levelDefinitionProvider;
         private readonly IPixelCellFactoryHandler _pixelCellFactoryHandler;
         private readonly ILaneUnitFactoryHandler _laneUnitFactoryHandler;
+        private readonly IProjectileFactory _projectileFactory;
         private readonly IPixelGridModel _pixelGridModel;
         private readonly IPixelGridView _pixelGridView;
         private readonly ILaneModel _laneModel;
@@ -17,13 +21,15 @@ namespace Game.Services
         private readonly IUnitSlotModel _unitSlotModel;
         private readonly IUnitSlotView _unitSlotView;
 
-        public GameplaySetupService(ILevelDefinitionProvider levelDefinitionProvider, IPixelCellFactoryHandler pixelCellFactoryHandler,
-            ILaneUnitFactoryHandler laneUnitFactoryHandler, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView,
+        public GameplaySetupService(IInputService inputService, ILevelDefinitionProvider levelDefinitionProvider, IPixelCellFactoryHandler pixelCellFactoryHandler,
+            IProjectileFactory projectileFactory, ILaneUnitFactoryHandler laneUnitFactoryHandler, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView,
             ILaneModel laneModel, ILaneView laneView, IUnitSlotModel unitSlotModel, IUnitSlotView unitSlotView)
         {
+            _inputService = inputService;
             _levelDefinitionProvider = levelDefinitionProvider;
             _pixelCellFactoryHandler = pixelCellFactoryHandler;
             _laneUnitFactoryHandler = laneUnitFactoryHandler;
+            _projectileFactory = projectileFactory;
             _pixelGridModel = pixelGridModel;
             _pixelGridView = pixelGridView;
             _laneModel = laneModel;
@@ -37,6 +43,7 @@ namespace Game.Services
             SetupPixelGrid();
             SetupLanes();
             SetupUnitSlots();
+            _inputService.Enable();
         }
 
         private void SetupPixelGrid()
@@ -63,7 +70,18 @@ namespace Game.Services
             _unitSlotModel.Initialize(slotCount);
         }
 
-        public void ResetGameplay() { }
-        public void ReleaseFactories() { }
+        public void ResetGameplay()
+        {
+            ReleaseFactories();
+            SetupGameplay();
+        }
+ 
+        public void ReleaseFactories()
+        {
+            _pixelCellFactoryHandler.ReleaseAllPixelCells();
+            _laneUnitFactoryHandler.ReleaseAllLaneUnits();
+            _projectileFactory.ReleaseProjectileByType<BallProjectileObject>();
+        }
+
     }
 }

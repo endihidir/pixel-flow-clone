@@ -6,5 +6,6 @@ namespace Game.Handlers
     {
         void OnFrontUnitTapped(BaseLaneUnitObject unit);
         void OnSlotUnitTapped(int slotIndex, BaseLaneUnitObject unit);
+        void Dispose();
     }
 }

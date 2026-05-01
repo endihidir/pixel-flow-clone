@@ -35,17 +35,15 @@ namespace Game.Bootstrappers
             IObjectPoolService poolService = new ObjectPoolService(GameConfigContainer.PoolServiceConfig).Initialize();
             IJsonSaveService jsonSaveService = new JsonSaveService();
             
-            PopulateLevelData(jsonSaveService, out var levelDefinitionProvider);
-            GameplayBootstrapper?.Initialize(poolService, levelDefinitionProvider, GameConfigContainer.GameplayConfigContainer);
-        }
-
-        private void PopulateLevelData(IJsonSaveService jsonSaveService, out ILevelDefinitionProvider levelDefinitionProvider)
-        {
+   
+            
             ILevelDataService levelDataService = new LevelDataService(GameConfigContainer.LevelDataServiceConfig);
             levelDataService.Initialize();
             ILevelProgressionModel levelProgressionModel = new LevelProgressionModel(jsonSaveService);
             levelProgressionModel.Initialize(levelDataService.LevelCount);
-            levelDefinitionProvider = new LevelDefinitionProvider(levelDataService, levelProgressionModel);
+            var levelDefinitionProvider = new LevelDefinitionProvider(levelDataService, levelProgressionModel);
+            
+            GameplayBootstrapper?.Initialize(poolService, levelDefinitionProvider, levelProgressionModel, GameConfigContainer.GameplayConfigContainer);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace Game.Models
         public event Action<int, BaseLaneUnitObject> OnUnitAdded;
         public event Action<int, BaseLaneUnitObject> OnUnitRemoved;
         public event Action<int, int, BaseLaneUnitObject> OnUnitShifted;
-        public event Action OnSlotFull;
+        public event Action OnSlotsFull;
 
         public void Initialize(int slotCount)
         {
@@ -31,7 +31,7 @@ namespace Game.Models
                 return true;
             }
 
-            OnSlotFull?.Invoke();
+            OnSlotsFull?.Invoke();
             slotIndex = -1;
             return false;
         }

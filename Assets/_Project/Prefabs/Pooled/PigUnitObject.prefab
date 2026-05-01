@@ -199,7 +199,6 @@ MonoBehaviour:
   <ProjectileSpawnPoint>k__BackingField: {fileID: 3749636934853496116}
   <UnitRenderer>k__BackingField: {fileID: 8148037968932223218}
   <AmmoText>k__BackingField: {fileID: 893515995669762003}
-  <MotionAnimation>k__BackingField: {fileID: 0}
   <Animation>k__BackingField: {fileID: 385616583353209432}
 --- !u!114 &385616583353209432
 MonoBehaviour:
@@ -218,8 +217,8 @@ MonoBehaviour:
   <OrbitSpeed>k__BackingField: 23
   <AimLocalYaw>k__BackingField: -90
   <AimRotateDuration>k__BackingField: 0.02
-  <LaunchMoveDuration>k__BackingField: 0.4
-  <LaunchJumpPower>k__BackingField: 10
+  <DefaultJumpDuration>k__BackingField: 0.4
+  <DefaultJumpPower>k__BackingField: 10
   <ScaleDownDuration>k__BackingField: 0.2
 --- !u!1 &8962120919185949376
 GameObject:
@@ -247,7 +246,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8962120919185949376}
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: -0.68}
+  m_LocalPosition: {x: 0, y: 0, z: -0.523}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -255,7 +254,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 3.33}
+  m_AnchoredPosition: {x: 0.07, y: 3.33}
   m_SizeDelta: {x: 2.25, y: 2.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &6579881486535446001

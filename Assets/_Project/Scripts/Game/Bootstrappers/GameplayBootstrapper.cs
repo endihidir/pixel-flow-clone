@@ -3,6 +3,7 @@ using Game.Configs;
 using Game.Factory.Handlers;
 using Game.Factories;
 using Game.Handlers;
+using Game.Level.Models;
 using Game.Level.Services;
 using Game.Models;
 using Game.Presenters;
@@ -17,16 +18,19 @@ namespace Game.Bootstrappers
         [field: SerializeField] private PixelGridView PixelGridView { get; set; }
         [field: SerializeField] private LaneView LaneView { get; set; }
         [field: SerializeField] private UnitSlotView UnitSlotView { get; set; }
+        [field: SerializeField] private LevelEndView LevelEndView { get; set; }
 
         private GameplaySetupService _gameplaySetupService;
         private PixelGridPresenter _pixelGridPresenter;
         private LanePresenter _lanePresenter;
         private UnitSlotPresenter _unitSlotPresenter;
+        private LevelEndPresenter _levelEndPresenter;
         private IInputService _inputService;
-        private LaneUnitShootHandler _laneUnitShootHandler;
-        
+        private ILaneUnitShootHandler _laneUnitShootHandler;
+        private ILevelResultHandler _levelResultHandler;
 
-        public void Initialize(IObjectPoolService poolService, ILevelDefinitionProvider levelDefinitionProvider, GameplayConfigContainerSO gameplayConfig)
+        public void Initialize(IObjectPoolService poolService, ILevelDefinitionProvider levelDefinitionProvider, ILevelProgressionModel levelProgressionModel, 
+            GameplayConfigContainerSO gameplayConfig)
         {
             _inputService = new InputService();
 
@@ -48,22 +52,26 @@ namespace Game.Bootstrappers
             
             _lanePresenter = new LanePresenter(laneModel, LaneView, _inputService, _laneUnitShootHandler);
             _unitSlotPresenter = new UnitSlotPresenter(unitSlotModel, UnitSlotView, _inputService, _laneUnitShootHandler);
-
             
-            _gameplaySetupService = new GameplaySetupService(levelDefinitionProvider, pixelCellFactoryHandler, laneUnitFactoryHandler,
+            _levelResultHandler = new LevelResultHandler(pixelGridModel, unitSlotModel);
+            
+            
+            _gameplaySetupService = new GameplaySetupService(_inputService, levelDefinitionProvider, pixelCellFactoryHandler, projectileFactory, laneUnitFactoryHandler,
                                                                 pixelGridModel, PixelGridView,
                                                                 laneModel, LaneView,
                                                                 unitSlotModel, UnitSlotView);
 
+            _levelEndPresenter = new LevelEndPresenter(_levelResultHandler, LevelEndView, _gameplaySetupService, levelProgressionModel, _inputService);
+            
             _gameplaySetupService.SetupGameplay();
-
-            _inputService.Enable();
         }
 
         private void Update() => _inputService?.Update();
 
         private void OnDestroy()
         {
+            _levelEndPresenter?.Dispose();
+            _levelResultHandler?.Dispose();
             _laneUnitShootHandler?.Dispose();
             _pixelGridPresenter?.Dispose();
             _lanePresenter?.Dispose();
