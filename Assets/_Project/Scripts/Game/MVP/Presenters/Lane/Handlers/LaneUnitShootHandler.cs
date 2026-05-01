@@ -5,25 +5,23 @@ using Game.Factories;
 using Game.Grid.Item;
 using Game.Lane.Item;
 using Game.Models;
-using Game.Presenters;
 using Game.Utils;
 using Game.Views;
 using UnityEngine;
 
 namespace Game.Handlers
 {
-    public sealed class LaneUnitShootHandler
+    public sealed class LaneUnitShootHandler : ILaneUnitShootHandler
     {
         private const int MaxActiveOrbiters = 5;
+        
         private const float LaunchMoveDuration = 0.4f;
-        private const float LaunchJumpPower = 3f;
+        private const float LaunchJumpPower = 10f;
         private const float OrbitSpeed = 15f;
         private const float BallSpeed = 50f;
         private const float MinBallDuration = 0.05f;
         private const float MaxBallDuration = 0.2f;
-
-        private readonly LanePresenter _lanePresenter;
-        private readonly UnitSlotPresenter _unitSlotPresenter;
+        
         private readonly ILaneModel _laneModel;
         private readonly IUnitSlotModel _unitSlotModel;
         private readonly IPixelGridModel _pixelGridModel;
@@ -37,13 +35,9 @@ namespace Game.Handlers
         private LaneUnitOrbitPath _orbitPath;
         private bool _isInitialized, _isDisposing;
 
-        public LaneUnitShootHandler(LanePresenter lanePresenter, UnitSlotPresenter unitSlotPresenter,
-            ILaneModel laneModel, IUnitSlotModel unitSlotModel, IPixelGridModel pixelGridModel,
-            IPixelGridView pixelGridView, IProjectileFactory projectileFactory,
-            ILaneUnitFactory laneUnitFactory, IPixelCellFactory pixelCellFactory)
+        public LaneUnitShootHandler(ILaneModel laneModel, IUnitSlotModel unitSlotModel, IPixelGridModel pixelGridModel, IPixelGridView pixelGridView, 
+            IProjectileFactory projectileFactory, ILaneUnitFactory laneUnitFactory, IPixelCellFactory pixelCellFactory)
         {
-            _lanePresenter = lanePresenter;
-            _unitSlotPresenter = unitSlotPresenter;
             _laneModel = laneModel;
             _unitSlotModel = unitSlotModel;
             _pixelGridModel = pixelGridModel;
@@ -51,17 +45,13 @@ namespace Game.Handlers
             _projectileFactory = projectileFactory;
             _laneUnitFactory = laneUnitFactory;
             _pixelCellFactory = pixelCellFactory;
-
-            _lanePresenter.OnFrontUnitTapped += OnFrontUnitTapped;
-            _unitSlotPresenter.OnSlotUnitTapped += OnSlotUnitTapped;
+            
             _pixelGridView.OnViewInitialized += OnPixelGridReady;
         }
 
         public void Dispose()
         {
             _isDisposing = true;
-            _lanePresenter.OnFrontUnitTapped -= OnFrontUnitTapped;
-            _unitSlotPresenter.OnSlotUnitTapped -= OnSlotUnitTapped;
             _pixelGridView.OnViewInitialized -= OnPixelGridReady;
 
             _activeOrbiters.Clear();
@@ -73,7 +63,7 @@ namespace Game.Handlers
             _isInitialized = true;
         }
 
-        private void OnFrontUnitTapped(BaseLaneUnitObject unit)
+        public void OnFrontUnitTapped(BaseLaneUnitObject unit)
         {
             if (!_laneModel.TryGetLaneIndexOf(unit, out int laneIndex)) return;
             if (!CanStartOrbit(unit)) return;
@@ -82,7 +72,7 @@ namespace Game.Handlers
             LaunchAndRunOrbitAsync(unit).Forget();
         }
 
-        private void OnSlotUnitTapped(int slotIndex, BaseLaneUnitObject unit)
+        public void OnSlotUnitTapped(int slotIndex, BaseLaneUnitObject unit)
         {
             if (!CanStartOrbit(unit)) return;
 

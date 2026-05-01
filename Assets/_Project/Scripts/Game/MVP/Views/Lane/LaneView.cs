@@ -8,6 +8,7 @@ namespace Game.Views
 {
     public sealed class LaneView : MonoBehaviour, ILaneView
     {
+        [field: SerializeField] public Camera Camera { get; private set; }
         [field: SerializeField] public Transform Root { get; private set; }
         [field: SerializeField] public Transform LeftPoint { get; private set; }
         [field: SerializeField] public Transform RightPoint { get; private set; }
@@ -41,16 +42,16 @@ namespace Game.Views
             await unit.MotionAnimation.MoveLocalTo(GetUnitLocalPosition(slotIndex), LaneViewConfig.AdvanceMoveDuration, moveOrder * LaneViewConfig.AdvanceStepDelay);
         }
 
-        public bool TryGetLaneIndexAtScreenPoint(Vector2 screenPoint, Camera cam, out int laneIndex)
+        public bool TryGetLaneIndexAtScreenPoint(Vector2 screenPoint, out int laneIndex)
         {
             laneIndex = -1;
-            if (cam == null || _laneRoots == null || _laneRoots.Length == 0) return false;
+            if (Camera == null || _laneRoots == null || _laneRoots.Length == 0) return false;
 
             var planeOrigin = Root.position;
             var planeNormal = Root.up;
             var plane = new Plane(planeNormal, planeOrigin);
 
-            var ray = cam.ScreenPointToRay(screenPoint);
+            var ray = Camera.ScreenPointToRay(screenPoint);
             if (!plane.Raycast(ray, out float enter)) return false;
 
             var worldHit = ray.GetPoint(enter);
@@ -68,16 +69,16 @@ namespace Game.Views
             return true;
         }
 
-        public bool TryGetLaneUnitSlotAtScreenPoint(Vector2 screenPoint, Camera cam, int laneIndex, int unitCount, out int slotIndex)
+        public bool TryGetLaneUnitSlotAtScreenPoint(Vector2 screenPoint, int laneIndex, int unitCount, out int slotIndex)
         {
             slotIndex = -1;
-            if (cam == null || _laneRoots == null || laneIndex < 0 || laneIndex >= _laneRoots.Length || unitCount <= 0) return false;
+            if (Camera == null || _laneRoots == null || laneIndex < 0 || laneIndex >= _laneRoots.Length || unitCount <= 0) return false;
 
             var planeOrigin = Root.position;
             var planeNormal = Root.up;
             var plane = new Plane(planeNormal, planeOrigin);
 
-            var ray = cam.ScreenPointToRay(screenPoint);
+            var ray = Camera.ScreenPointToRay(screenPoint);
             if (!plane.Raycast(ray, out float enter)) return false;
 
             var worldHit = ray.GetPoint(enter);

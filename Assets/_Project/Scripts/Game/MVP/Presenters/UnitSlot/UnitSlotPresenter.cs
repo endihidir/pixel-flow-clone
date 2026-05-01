@@ -1,4 +1,5 @@
 using System;
+using Game.Handlers;
 using Game.Lane.Item;
 using Game.Models;
 using Game.Services;
@@ -12,16 +13,14 @@ namespace Game.Presenters
         private readonly IUnitSlotModel _model;
         private readonly IUnitSlotView _view;
         private readonly IInputService _inputService;
-        private readonly Camera _camera;
+        private readonly ILaneUnitShootHandler _laneUnitShootHandler;
 
-        public event Action<int, BaseLaneUnitObject> OnSlotUnitTapped;
-
-        public UnitSlotPresenter(IUnitSlotModel model, IUnitSlotView view, IInputService inputService, Camera camera)
+        public UnitSlotPresenter(IUnitSlotModel model, IUnitSlotView view, IInputService inputService, ILaneUnitShootHandler laneUnitShootHandler)
         {
             _model = model;
             _view = view;
             _inputService = inputService;
-            _camera = camera;
+            _laneUnitShootHandler = laneUnitShootHandler;
 
             _model.OnUnitAdded += OnUnitAdded;
             _inputService.OnTap += OnTap;
@@ -34,11 +33,11 @@ namespace Game.Presenters
 
         private void OnTap(Vector2 screenPoint)
         {
-            if (!_view.TryGetSlotIndexAtScreenPoint(screenPoint, _camera, out var slotIndex)) return;
+            if (!_view.TryGetSlotIndexAtScreenPoint(screenPoint, out var slotIndex)) return;
             if (_model.IsEmpty(slotIndex)) return;
 
             var unit = _model.GetUnitAt(slotIndex);
-            OnSlotUnitTapped?.Invoke(slotIndex, unit);
+            _laneUnitShootHandler?.OnSlotUnitTapped(slotIndex, unit);
         }
 
         public void Dispose()

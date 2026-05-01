@@ -6,6 +6,7 @@ namespace Game.Views
 {
     public sealed class UnitSlotView : MonoBehaviour, IUnitSlotView
     {
+        [field: SerializeField] public Camera Camera { get; private set; }
         [field: SerializeField] public Transform Root { get; private set; }
         [field: SerializeField] public Transform LeftPoint { get; private set; }
         [field: SerializeField] public Transform RightPoint { get; private set; }
@@ -21,13 +22,13 @@ namespace Game.Views
             unit.SetLocalRotation(Quaternion.identity);
         }
 
-        public bool TryGetSlotIndexAtScreenPoint(Vector2 screenPoint, Camera cam, out int slotIndex)
+        public bool TryGetSlotIndexAtScreenPoint(Vector2 screenPoint, out int slotIndex)
         {
             slotIndex = -1;
-            if (!cam || Slots == null || Slots.Length == 0 || !LeftPoint || !RightPoint) return false;
+            if (!Camera || Slots == null || Slots.Length == 0 || !LeftPoint || !RightPoint) return false;
 
             var plane = new Plane(Root.up, Root.position);
-            var ray = cam.ScreenPointToRay(screenPoint);
+            var ray = Camera.ScreenPointToRay(screenPoint);
             if (!plane.Raycast(ray, out float enter)) return false;
 
             var localHit = Root.InverseTransformPoint(ray.GetPoint(enter));

@@ -14,7 +14,6 @@ namespace Game.Bootstrappers
 {
     public class GameplayBootstrapper : MonoBehaviour
     {
-        [field: SerializeField] private Camera GameplayCamera { get; set; }
         [field: SerializeField] private PixelGridView PixelGridView { get; set; }
         [field: SerializeField] private LaneView LaneView { get; set; }
         [field: SerializeField] private UnitSlotView UnitSlotView { get; set; }
@@ -42,13 +41,14 @@ namespace Game.Bootstrappers
             IPixelCellFactoryHandler pixelCellFactoryHandler = new PixelCellFactoryHandler(pixelCellFactory, gameplayConfig.ColorPalette);
             ILaneUnitFactoryHandler laneUnitFactoryHandler = new LaneUnitFactoryHandler(laneUnitFactory, gameplayConfig.ColorPalette);
 
-            
             _pixelGridPresenter = new PixelGridPresenter(pixelGridModel, PixelGridView);
-            _lanePresenter = new LanePresenter(laneModel, LaneView, _inputService, GameplayCamera);
-            _unitSlotPresenter = new UnitSlotPresenter(unitSlotModel, UnitSlotView, _inputService, GameplayCamera);
-
-            _laneUnitShootHandler = new LaneUnitShootHandler(_lanePresenter, _unitSlotPresenter, laneModel, unitSlotModel, pixelGridModel, PixelGridView, 
+            
+            _laneUnitShootHandler = new LaneUnitShootHandler(laneModel, unitSlotModel, pixelGridModel, PixelGridView, 
                                                              projectileFactory, laneUnitFactory, pixelCellFactory);
+            
+            _lanePresenter = new LanePresenter(laneModel, LaneView, _inputService, _laneUnitShootHandler);
+            _unitSlotPresenter = new UnitSlotPresenter(unitSlotModel, UnitSlotView, _inputService, _laneUnitShootHandler);
+
             
             _gameplaySetupService = new GameplaySetupService(levelDefinitionProvider, pixelCellFactoryHandler, laneUnitFactoryHandler,
                                                                 pixelGridModel, PixelGridView,

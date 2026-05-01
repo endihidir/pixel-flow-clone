@@ -522,7 +522,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fba1c0440a5ce4981c08806f40390c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <GameplayCamera>k__BackingField: {fileID: 330585545}
   <PixelGridView>k__BackingField: {fileID: 348591127}
   <LaneView>k__BackingField: {fileID: 1976091108}
   <UnitSlotView>k__BackingField: {fileID: 1673774757}
@@ -653,6 +652,16 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 1654435896}
     m_Modifications:
+    - target: {fileID: 2189659083864579976, guid: 3147496eacd0f1b44a1ad0f6bcfdec9d,
+        type: 3}
+      propertyPath: <Camera>k__BackingField
+      value: 
+      objectReference: {fileID: 330585545}
+    - target: {fileID: 2189659083864579976, guid: 3147496eacd0f1b44a1ad0f6bcfdec9d,
+        type: 3}
+      propertyPath: <GameplayCamera>k__BackingField
+      value: 
+      objectReference: {fileID: 330585545}
     - target: {fileID: 5116485501145139313, guid: 3147496eacd0f1b44a1ad0f6bcfdec9d,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -771,6 +780,16 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2503026746355186566, guid: 2dea4ddf10908d04c9dde7f0d4280302,
+        type: 3}
+      propertyPath: <Camera>k__BackingField
+      value: 
+      objectReference: {fileID: 330585545}
+    - target: {fileID: 2503026746355186566, guid: 2dea4ddf10908d04c9dde7f0d4280302,
+        type: 3}
+      propertyPath: <GameplayCamera>k__BackingField
+      value: 
+      objectReference: {fileID: 330585545}
     - target: {fileID: 6105146746817249819, guid: 2dea4ddf10908d04c9dde7f0d4280302,
         type: 3}
       propertyPath: m_Name

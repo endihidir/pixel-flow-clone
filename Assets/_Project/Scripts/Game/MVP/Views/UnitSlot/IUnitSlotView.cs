@@ -7,6 +7,6 @@ namespace Game.Views
     {
         int SlotCount { get; }
         void PlaceUnit(int slotIndex, BaseLaneUnitObject unit);
-        bool TryGetSlotIndexAtScreenPoint(Vector2 screenPoint, Camera cam, out int slotIndex);
+        bool TryGetSlotIndexAtScreenPoint(Vector2 screenPoint, out int slotIndex);
     }
 }
