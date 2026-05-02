@@ -217,7 +217,7 @@ MonoBehaviour:
   <OrbitSpeed>k__BackingField: 23
   <AimLocalYaw>k__BackingField: -90
   <AimRotateDuration>k__BackingField: 0.02
-  <DefaultJumpDuration>k__BackingField: 0.4
+  <DefaultJumpDuration>k__BackingField: 0.3
   <DefaultJumpPower>k__BackingField: 10
   <ScaleDownDuration>k__BackingField: 0.2
 --- !u!1 &8962120919185949376

@@ -27,17 +27,12 @@ namespace Game.Views
         {
             if (!unit) return;
 
-            var slot = Slots[slotIndex];
-
             unit.Animation.ResetAim(unit.Animation.DefaultJumpDuration);
-            
-            await unit.Animation.JumpTo(slot.position);
+            await unit.Animation.JumpTo(Slots[slotIndex].position);
 
             if (!unit) return;
 
-            unit.SetParent(slot);
-            unit.SetLocalPosition(Vector3.zero);
-            unit.SetLocalRotation(Quaternion.identity);
+            PlaceUnit(slotIndex, unit);
         }
 
         public bool TryGetSlotIndexAtScreenPoint(Vector2 screenPoint, out int slotIndex)
@@ -54,16 +49,21 @@ namespace Game.Views
             var localHit = Root.InverseTransformPoint(ray.GetPoint(enter));
             var leftLocal = Root.InverseTransformPoint(LeftPoint.position);
             var rightLocal = Root.InverseTransformPoint(RightPoint.position);
+            
+            float spacing = Slots.Length > 1
+                ? Mathf.Abs(rightLocal.x - leftLocal.x) / (Slots.Length - 1)
+                : 0f;
+            float halfSpacing = spacing * 0.5f;
 
-            float minX = Mathf.Min(leftLocal.x, rightLocal.x);
-            float maxX = Mathf.Max(leftLocal.x, rightLocal.x);
+            float minX = Mathf.Min(leftLocal.x, rightLocal.x) - halfSpacing;
+            float maxX = Mathf.Max(leftLocal.x, rightLocal.x) + halfSpacing;
 
             if (localHit.x < minX || localHit.x > maxX) return false;
+            
+            float zPadding = halfSpacing > 0f ? halfSpacing : 0.5f;
+            float midZ = (leftLocal.z + rightLocal.z) * 0.5f;
 
-            float minZ = Mathf.Min(leftLocal.z, rightLocal.z);
-            float maxZ = Mathf.Max(leftLocal.z, rightLocal.z);
-
-            if (localHit.z < minZ || localHit.z > maxZ) return false;
+            if (Mathf.Abs(localHit.z - midZ) > zPadding) return false;
 
             float bestDist = float.MaxValue;
             int bestIdx = -1;

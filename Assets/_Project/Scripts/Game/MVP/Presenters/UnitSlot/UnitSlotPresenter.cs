@@ -28,23 +28,30 @@ namespace Game.Presenters
             _inputService.OnTap += OnTap;
         }
 
-        private void OnUnitAdded(int slotIndex, BaseLaneUnitObject unit)
-        {
-            _view.JumpUnitToSlot(slotIndex, unit).Forget();
-        }
+        private void OnUnitAdded(int slotIndex, BaseLaneUnitObject unit) => JumpAsync(slotIndex, unit).Forget();
 
-        private void OnUnitShifted(int fromSlotIndex, int toSlotIndex, BaseLaneUnitObject unit)
-        {
-            _view.JumpUnitToSlot(toSlotIndex, unit).Forget();
-        }
+        private void OnUnitShifted(int fromSlotIndex, int toSlotIndex, BaseLaneUnitObject unit) => JumpAsync(toSlotIndex, unit).Forget();
+
+        private async UniTask JumpAsync(int slotIndex, BaseLaneUnitObject unit) => await _view.JumpUnitToSlot(slotIndex, unit);
 
         private void OnTap(Vector2 screenPoint)
         {
+            if (IsAnyUnitJumping()) return;
             if (!_view.TryGetSlotIndexAtScreenPoint(screenPoint, out var slotIndex)) return;
             if (_model.IsEmpty(slotIndex)) return;
 
             var unit = _model.GetUnitAt(slotIndex);
             _laneUnitShootHandler.OnSlotUnitTapped(slotIndex, unit);
+        }
+        
+        private bool IsAnyUnitJumping()
+        {
+            for (int i = 0; i < _model.SlotCount; i++)
+            {
+                if (_model.IsEmpty(i)) continue;
+                if (_model.GetUnitAt(i).Animation.IsJumping) return true;
+            }
+            return false;
         }
 
         public void Dispose()

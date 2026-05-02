@@ -19,21 +19,24 @@ namespace Game.Modules
         private Tween _rotateTween;
         private Tween _aimTween;
         private Tween _scaleTween;
+        private Tween _jumpTween;
+        
+        public bool IsJumping => _jumpTween != null && _jumpTween.IsActive() && _jumpTween.IsPlaying();
         
         public Tween MoveLocalTo(Vector3 localPos, float duration, float delay = 0f, Ease ease = Ease.OutQuad)
         {
-            _moveTween?.Kill();
+            KillTransformPositionTweens();
             _moveTween = Transform.DOLocalMove(localPos, duration).SetDelay(delay).SetEase(ease);
             return _moveTween;
         }
 
         public Tween JumpTo(Vector3 worldPos, float jumpPower = 0, float duration = 0)
         {
-            _moveTween?.Kill();
+            KillTransformPositionTweens();
             var power = jumpPower > 0 ? jumpPower : DefaultJumpPower;
             var dur = duration > 0 ? duration : DefaultJumpDuration;
-            _moveTween = Transform.DOJump(worldPos, power, 1, dur).SetEase(Ease.Linear);
-            return _moveTween;
+            _jumpTween = Transform.DOJump(worldPos, power, 1, dur).SetEase(Ease.Linear);
+            return _jumpTween;
         }
 
         public Tween ScaleDown()
@@ -45,7 +48,7 @@ namespace Game.Modules
 
         public Tween MoveSegment(Vector3 toPos, float duration)
         {
-            _moveTween?.Kill();
+            KillTransformPositionTweens();
             _moveTween = Transform.DOMove(toPos, duration).SetEase(Ease.Linear);
             return _moveTween;
         }
@@ -89,10 +92,17 @@ namespace Game.Modules
             _aimTween?.Kill();
             UnitHolder.localRotation = Quaternion.identity;
         }
+        
+        private void KillTransformPositionTweens()
+        {
+            _moveTween?.Kill();
+            _jumpTween?.Kill();
+        }
 
         public void Dispose()
         {
             _moveTween?.Kill();
+            _jumpTween?.Kill();
             _rotateTween?.Kill();
             _aimTween?.Kill();
             _scaleTween?.Kill();
@@ -110,6 +120,7 @@ namespace Game.Modules
             _rotateTween = null;
             _aimTween = null;
             _scaleTween = null;
+            _jumpTween = null;
         }
     }
 }
