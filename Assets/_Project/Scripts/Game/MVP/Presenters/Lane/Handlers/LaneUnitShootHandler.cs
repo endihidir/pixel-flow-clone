@@ -87,7 +87,7 @@ namespace Game.Handlers
 
             int startIdx = _orbitPath.LaunchNodeIndex;
             var launchPos = _orbitPath.Nodes[startIdx].Position;
-            
+
             await unit.Animation.JumpTo(launchPos);
 
             bool aimLocked = ShouldStartWithInwardAim(unit);
@@ -99,7 +99,8 @@ namespace Game.Handlers
             else
                 unit.Animation.ResetAimImmediate();
 
-            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.Animation.OrbitSpeed, aimLocked, HandleTriggerAtNode);
+            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.Animation.OrbitSpeed, aimLocked,
+                                  HandleTriggerAtNode, HasNoLaneUnits);
 
             HandleOrbitCompleted(unit);
         }
@@ -188,6 +189,13 @@ namespace Game.Handlers
         {
             var startNode = _orbitPath.Nodes[_orbitPath.LaunchNodeIndex];
             return OrbitLineSearcher.TryFindMatchingPixelOnLine(_pixelGridModel, startNode, unit.ColorId, out _);
+        }
+
+        private bool HasNoLaneUnits()
+        {
+            for (int i = 0; i < _laneModel.LaneCount; i++)
+                if (_laneModel.GetUnitCount(i) > 0) return false;
+            return true;
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using Game.Data;
 using Game.Lane.Item;
@@ -9,7 +10,8 @@ namespace Game.Utils
     {
         public delegate UniTask<bool> NodeHandler(BaseLaneUnitObject unit, int nodeIndex, bool aimLocked);
 
-        public static async UniTask Run(BaseLaneUnitObject unit, LaneUnitOrbitPath path, int startIdx, float speed, bool aimLocked, NodeHandler onTriggerNode)
+        public static async UniTask Run(BaseLaneUnitObject unit, LaneUnitOrbitPath path, int startIdx, float speed,
+            bool aimLocked, NodeHandler onTriggerNode, Func<bool> shouldContinueOnLapEnd = null)
         {
             int endIdx = FindPreviousTriggerIndex(path, startIdx);
             int currentIdx = startIdx;
@@ -21,7 +23,7 @@ namespace Game.Utils
                 if (ShouldStop()) return;
             }
 
-            while (currentIdx != endIdx)
+            while (true)
             {
                 int toIdx = (currentIdx + 1) % path.Nodes.Length;
                 var fromNode = path.Nodes[currentIdx];
@@ -45,9 +47,10 @@ namespace Game.Utils
 
                     if (ShouldStop()) return;
                 }
-            }
 
-            return;
+                if (currentIdx == endIdx && (shouldContinueOnLapEnd == null || !shouldContinueOnLapEnd()))
+                    return;
+            }
 
             bool ShouldStop()
             {
