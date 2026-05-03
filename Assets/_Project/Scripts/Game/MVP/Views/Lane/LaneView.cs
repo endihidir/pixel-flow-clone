@@ -39,30 +39,24 @@ namespace Game.Views
 
         public async UniTask AnimateUnitToSlot(int slotIndex, int moveOrder, BaseLaneUnitObject unit)
         {
-            await unit.Animation.MoveLocalTo(GetUnitLocalPosition(slotIndex), LaneViewConfig.AdvanceMoveDuration, moveOrder * LaneViewConfig.AdvanceStepDelay);
+            var unitLocalPos = GetUnitLocalPosition(slotIndex);
+            var moveDuration = LaneViewConfig.AdvanceMoveDuration;
+            var delay = moveOrder * LaneViewConfig.AdvanceStepDelay;
+            await unit.Animation.MoveLocalTo(unitLocalPos, moveDuration, delay);
         }
 
         public bool TryGetLaneIndexAtScreenPoint(Vector2 screenPoint, out int laneIndex)
         {
             laneIndex = -1;
-            if (Camera == null || _laneRoots == null || _laneRoots.Length == 0) return false;
+            if (_laneRoots == null || _laneRoots.Length == 0) return false;
+            if (!TryRaycastToLocal(screenPoint, out var localHit)) return false;
 
-            var planeOrigin = Root.position;
-            var planeNormal = Root.up;
-            var plane = new Plane(planeNormal, planeOrigin);
-
-            var ray = Camera.ScreenPointToRay(screenPoint);
-            if (!plane.Raycast(ray, out float enter)) return false;
-
-            var worldHit = ray.GetPoint(enter);
-            var localHit = Root.InverseTransformPoint(worldHit);
-
-            float relativeX = localHit.x - _firstLaneLocalX;
-            int idx = Mathf.RoundToInt(relativeX / _laneSpacing);
+            var relativeX = localHit.x - _firstLaneLocalX;
+            var idx = Mathf.RoundToInt(relativeX / _laneSpacing);
 
             if (idx < 0 || idx >= _laneRoots.Length) return false;
 
-            float laneCenterLocalX = _firstLaneLocalX + idx * _laneSpacing;
+            var laneCenterLocalX = _firstLaneLocalX + idx * _laneSpacing;
             if (Mathf.Abs(localHit.x - laneCenterLocalX) > LaneViewConfig.TapPlaneHalfWidth) return false;
 
             laneIndex = idx;
@@ -72,32 +66,24 @@ namespace Game.Views
         public bool TryGetLaneUnitSlotAtScreenPoint(Vector2 screenPoint, int laneIndex, int unitCount, out int slotIndex)
         {
             slotIndex = -1;
-            if (Camera == null || _laneRoots == null || laneIndex < 0 || laneIndex >= _laneRoots.Length || unitCount <= 0) return false;
+            if (_laneRoots == null || laneIndex < 0 || laneIndex >= _laneRoots.Length || unitCount <= 0) return false;
+            if (!TryRaycastToLocal(screenPoint, out var localHit)) return false;
 
-            var planeOrigin = Root.position;
-            var planeNormal = Root.up;
-            var plane = new Plane(planeNormal, planeOrigin);
-
-            var ray = Camera.ScreenPointToRay(screenPoint);
-            if (!plane.Raycast(ray, out float enter)) return false;
-
-            var worldHit = ray.GetPoint(enter);
-            var localHit = Root.InverseTransformPoint(worldHit);
             var laneRootLocalPos = _laneRoots[laneIndex].localPosition;
 
-            float bestSqrDist = float.MaxValue;
-            int bestSlotIndex = -1;
+            var bestSqrDist = float.MaxValue;
+            var bestSlotIndex = -1;
 
             for (int i = 0; i < unitCount; i++)
             {
                 var unitLocalPos = laneRootLocalPos + GetUnitLocalPosition(i);
-                float dx = Mathf.Abs(localHit.x - unitLocalPos.x);
-                float dz = Mathf.Abs(localHit.z - unitLocalPos.z);
+                var dx = Mathf.Abs(localHit.x - unitLocalPos.x);
+                var dz = Mathf.Abs(localHit.z - unitLocalPos.z);
 
                 if (dx > LaneViewConfig.UnitTapHalfWidth) continue;
                 if (dz > LaneViewConfig.UnitTapHalfDepth) continue;
 
-                float sqrDist = dx * dx + dz * dz;
+                var sqrDist = dx * dx + dz * dz;
                 if (sqrDist >= bestSqrDist) continue;
 
                 bestSqrDist = sqrDist;
@@ -110,6 +96,22 @@ namespace Game.Views
             return true;
         }
 
+        private bool TryRaycastToLocal(Vector2 screenPoint, out Vector3 localHit)
+        {
+            localHit = default;
+            if (!Camera || !Root) return false;
+
+            var planeOrigin = Root.position + Root.up * LaneViewConfig.TapPlaneHeightOffset;
+            var plane = new Plane(Root.up, planeOrigin);
+            var ray = Camera.ScreenPointToRay(screenPoint);
+            if (!plane.Raycast(ray, out var enter)) return false;
+
+            var worldHit = ray.GetPoint(enter);
+            
+            localHit = Root.InverseTransformPoint(worldHit);
+            return true;
+        }
+
         private void BuildLaneRoots(int laneCount)
         {
             ClearLaneRoots();
@@ -118,14 +120,12 @@ namespace Game.Views
             var leftLocal = Root.InverseTransformPoint(LeftPoint.position);
             var rightLocal = Root.InverseTransformPoint(RightPoint.position);
 
-            float availableWidth = rightLocal.x - leftLocal.x;
-            float desiredWidth = (laneCount - 1) * LaneViewConfig.LaneSpacing;
-            _laneSpacing = desiredWidth > availableWidth && laneCount > 1
-                ? availableWidth / (laneCount - 1)
-                : LaneViewConfig.LaneSpacing;
+            var availableWidth = rightLocal.x - leftLocal.x;
+            var desiredWidth = (laneCount - 1) * LaneViewConfig.LaneSpacing;
+            _laneSpacing = desiredWidth > availableWidth && laneCount > 1 ? availableWidth / (laneCount - 1) : LaneViewConfig.LaneSpacing;
 
-            float usedWidth = (laneCount - 1) * _laneSpacing;
-            float centerX = (leftLocal.x + rightLocal.x) * 0.5f;
+            var usedWidth = (laneCount - 1) * _laneSpacing;
+            var centerX = (leftLocal.x + rightLocal.x) * 0.5f;
             _firstLaneLocalX = centerX - usedWidth * 0.5f;
 
             for (int i = 0; i < laneCount; i++)

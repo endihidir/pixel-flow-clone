@@ -107,9 +107,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9551235fd45ef04891b445213b035de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <Camera>k__BackingField: {fileID: 0}
   <Root>k__BackingField: {fileID: 5426796659929155947}
   <LeftPoint>k__BackingField: {fileID: 2728351591845845328}
   <RightPoint>k__BackingField: {fileID: 7162829665444996036}
+  <TapPlaneHeightOffset>k__BackingField: 1
   <Slots>k__BackingField:
   - {fileID: 7828839450160931215}
   - {fileID: 2589456242543560866}

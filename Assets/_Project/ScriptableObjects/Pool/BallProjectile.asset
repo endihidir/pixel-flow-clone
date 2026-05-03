@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99e9be5f097254647a0f84b9c8d834e1, type: 3}
   m_Name: BallProjectile
   m_EditorClassIdentifier: 
-  <IsLazy>k__BackingField: 0
+  <IsLazy>k__BackingField: 1
   <PoolSize>k__BackingField: 12
   <PoolObject>k__BackingField: {fileID: 2546160381126065462, guid: 3bdfd83c67899174fb6c89355479ea79,
     type: 3}

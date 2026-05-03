@@ -11,6 +11,7 @@ namespace Game.Views
         [field: SerializeField] public Transform Root { get; private set; }
         [field: SerializeField] public Transform LeftPoint { get; private set; }
         [field: SerializeField] public Transform RightPoint { get; private set; }
+        [field: SerializeField] public float TapPlaneHeightOffset { get; private set; } = 0.5f;
         [field: SerializeField] public Transform[] Slots { get; private set; }
 
         public int SlotCount => Slots?.Length ?? 0;
@@ -41,39 +42,38 @@ namespace Game.Views
 
             if (!Camera || Slots == null || Slots.Length == 0 || !LeftPoint || !RightPoint) return false;
 
-            var plane = new Plane(Root.up, Root.position);
+            var planeOrigin = Root.position + Root.up * TapPlaneHeightOffset;
+            var plane = new Plane(Root.up, planeOrigin);
             var ray = Camera.ScreenPointToRay(screenPoint);
 
-            if (!plane.Raycast(ray, out float enter)) return false;
+            if (!plane.Raycast(ray, out var enter)) return false;
 
             var localHit = Root.InverseTransformPoint(ray.GetPoint(enter));
             var leftLocal = Root.InverseTransformPoint(LeftPoint.position);
             var rightLocal = Root.InverseTransformPoint(RightPoint.position);
             
-            float spacing = Slots.Length > 1
-                ? Mathf.Abs(rightLocal.x - leftLocal.x) / (Slots.Length - 1)
-                : 0f;
-            float halfSpacing = spacing * 0.5f;
+            var spacing = Slots.Length > 1 ? Mathf.Abs(rightLocal.x - leftLocal.x) / (Slots.Length - 1) : 0f;
+            var halfSpacing = spacing * 0.5f;
 
-            float minX = Mathf.Min(leftLocal.x, rightLocal.x) - halfSpacing;
-            float maxX = Mathf.Max(leftLocal.x, rightLocal.x) + halfSpacing;
+            var minX = Mathf.Min(leftLocal.x, rightLocal.x) - halfSpacing;
+            var maxX = Mathf.Max(leftLocal.x, rightLocal.x) + halfSpacing;
 
             if (localHit.x < minX || localHit.x > maxX) return false;
             
-            float zPadding = halfSpacing > 0f ? halfSpacing : 0.5f;
-            float midZ = (leftLocal.z + rightLocal.z) * 0.5f;
+            var zPadding = halfSpacing > 0f ? halfSpacing : 0.5f;
+            var midZ = (leftLocal.z + rightLocal.z) * 0.5f;
 
             if (Mathf.Abs(localHit.z - midZ) > zPadding) return false;
 
-            float bestDist = float.MaxValue;
-            int bestIdx = -1;
+            var bestDist = float.MaxValue;
+            var bestIdx = -1;
 
             for (int i = 0; i < Slots.Length; i++)
             {
                 if (!Slots[i]) continue;
 
                 var slotLocal = Root.InverseTransformPoint(Slots[i].position);
-                float dist = Mathf.Abs(localHit.x - slotLocal.x);
+                var dist = Mathf.Abs(localHit.x - slotLocal.x);
 
                 if (dist >= bestDist) continue;
 
@@ -95,8 +95,8 @@ namespace Game.Views
             var leftLocal = Root.InverseTransformPoint(LeftPoint.position);
             var rightLocal = Root.InverseTransformPoint(RightPoint.position);
 
-            float midY = (leftLocal.y + rightLocal.y) * 0.5f;
-            float midZ = (leftLocal.z + rightLocal.z) * 0.5f;
+            var midY = (leftLocal.y + rightLocal.y) * 0.5f;
+            var midZ = (leftLocal.z + rightLocal.z) * 0.5f;
 
             if (Slots.Length == 1)
             {
@@ -110,7 +110,7 @@ namespace Game.Views
             {
                 if (!Slots[i]) continue;
 
-                float t = (float)i / (Slots.Length - 1);
+                var t = (float)i / (Slots.Length - 1);
                 Slots[i].localPosition = new Vector3(Mathf.Lerp(leftLocal.x, rightLocal.x, t), midY, midZ);
             }
         }

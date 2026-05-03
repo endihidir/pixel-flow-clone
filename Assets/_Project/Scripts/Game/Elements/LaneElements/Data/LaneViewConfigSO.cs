@@ -21,9 +21,12 @@ namespace Game.Lane.Configs
         [field: SerializeField] public float UnitTapHalfDepth { get; private set; } = 2f;
 
         [Tooltip("Duration of the local move animation when lane units advance forward.")]
-        [field: SerializeField] public float AdvanceMoveDuration { get; private set; } = 0.18f;
+        [field: SerializeField] public float AdvanceMoveDuration { get; private set; } = 0.15f;
 
         [Tooltip("Delay between each unit advance step animation.")]
-        [field: SerializeField] public float AdvanceStepDelay { get; private set; } = 0.035f;
+        [field: SerializeField] public float AdvanceStepDelay { get; private set; } = 0.02f;
+        
+        [field: SerializeField, Tooltip("Raises the tap plane along Root.up to roughly unit center height, so camera-tilted taps on tall units don't miss.")]
+        public float TapPlaneHeightOffset { get; private set; } = 2f;
     }
 }

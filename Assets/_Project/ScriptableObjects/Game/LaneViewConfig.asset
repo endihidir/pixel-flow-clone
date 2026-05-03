@@ -19,3 +19,4 @@ MonoBehaviour:
   <UnitTapHalfDepth>k__BackingField: 2
   <AdvanceMoveDuration>k__BackingField: 0.15
   <AdvanceStepDelay>k__BackingField: 0.02
+  <TapPlaneHeightOffset>k__BackingField: 2

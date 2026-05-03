@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ebc0db3a82fc5484a9819b4b56a32cbd, type: 3}
-  m_Name: PoolServiceConfig
+  m_Name: _PoolServiceConfig
   m_EditorClassIdentifier: 
   <PooledAssets>k__BackingField:
   - {fileID: 11400000, guid: ad7aebe604f2da74ea9d6adb5ad0480e, type: 2}

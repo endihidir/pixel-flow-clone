@@ -1765,11 +1765,6 @@ PrefabInstance:
       propertyPath: <Camera>k__BackingField
       value: 
       objectReference: {fileID: 330585545}
-    - target: {fileID: 2503026746355186566, guid: 2dea4ddf10908d04c9dde7f0d4280302,
-        type: 3}
-      propertyPath: <GameplayCamera>k__BackingField
-      value: 
-      objectReference: {fileID: 330585545}
     - target: {fileID: 6105146746817249819, guid: 2dea4ddf10908d04c9dde7f0d4280302,
         type: 3}
       propertyPath: m_Name
