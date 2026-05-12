@@ -99,8 +99,7 @@ namespace Game.Handlers
             else
                 unit.Animation.ResetAimImmediate();
 
-            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.Animation.OrbitSpeed, aimLocked,
-                                  HandleTriggerAtNode, HasNoLaneUnits);
+            await OrbitRunner.Run(unit, _orbitPath, startIdx, unit.Animation.OrbitSpeed, aimLocked, HandleTriggerAtNode, HasNoLaneUnits);
 
             HandleOrbitCompleted(unit);
         }
@@ -124,6 +123,7 @@ namespace Game.Handlers
             }
 
             _pixelGridModel.SetGridObject(coord, null);
+            
             unit.ConsumeAmmo(1);
 
             if (!aimLocked) await unit.Animation.AimAtPixelGrid();
